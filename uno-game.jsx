@@ -1,236 +1,182 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 
-// ============================================================
-// CONSTANTS & CARD DEFINITIONS
-// ============================================================
-const COLORS = ["red", "yellow", "green", "blue"];
-const COLOR_HEX = {
-  red: "#FF2D55",
-  yellow: "#FFD60A",
-  green: "#30D158",
-  blue: "#0A84FF",
-  wild: "#BF5AF2",
-};
+/* ─────────────────────────────────────────────
+   GAME DATA & LOGIC
+───────────────────────────────────────────── */
+const COLORS = ["red","yellow","green","blue"];
+const C = { red:"#C0392B", yellow:"#D4A017", green:"#1A6B3C", blue:"#154F8A", wild:"#6A1E9A" };
+const FELT = "#0B3320";
+const GOLD  = "#C9A84C";
+const CREAM = "#F2E0C0";
+const DARK  = "#070F09";
 
-function createDeck() {
-  const deck = [];
-  COLORS.forEach((color) => {
-    deck.push({ color, value: "0", type: "number" });
-    for (let i = 1; i <= 9; i++) {
-      deck.push({ color, value: `${i}`, type: "number" });
-      deck.push({ color, value: `${i}`, type: "number" });
+function makeDeck(){
+  const d=[];
+  COLORS.forEach(col=>{
+    d.push({col,val:"0",kind:"num"});
+    for(let n=1;n<=9;n++){
+      d.push({col,val:`${n}`,kind:"num"});
+      d.push({col,val:`${n}`,kind:"num"});
     }
-    ["Skip", "Reverse", "+2"].forEach((v) => {
-      deck.push({ color, value: v, type: "action" });
-      deck.push({ color, value: v, type: "action" });
+    ["Skip","Rev","+2"].forEach(v=>{
+      d.push({col,val:v,kind:"act"});
+      d.push({col,val:v,kind:"act"});
     });
   });
-  ["Wild", "Wild +4", "Wild", "Wild +4"].forEach((v) => {
-    deck.push({ color: "wild", value: v, type: "wild" });
-  });
-  return deck;
+  ["Wild","W+4","Wild","W+4"].forEach(v=>d.push({col:"wild",val:v,kind:"wild"}));
+  return d;
 }
 
-function shuffle(arr) {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
+function shuffle(a){const b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];}return b;}
 
-function canPlay(card, topCard, currentColor) {
-  if (card.type === "wild") return true;
-  if (card.color === currentColor) return true;
-  if (card.value === topCard.value) return true;
+function canPlay(card,top,curCol){
+  if(card.kind==="wild") return true;
+  if(card.col===curCol) return true;
+  if(card.val===top.val) return true;
   return false;
 }
 
-const CARD_VALUE_ICONS = {
-  Skip: "⊘",
-  Reverse: "⇄",
-  "+2": "+2",
-  Wild: "★",
-  "Wild +4": "+4",
-};
+function newGame(numPlayers){
+  let deck=shuffle(makeDeck());
+  const players=Array.from({length:numPlayers},(_,i)=>({id:i,name:i===0?"You":`Player ${i+1}`,hand:[],isHuman:i===0}));
+  for(let i=0;i<7;i++) players.forEach(p=>p.hand.push(deck.pop()));
+  let top;
+  do{top=deck.pop();if(top.kind==="wild")deck.unshift(top);}while(top.kind==="wild");
+  return{deck,pile:[top],players,cur:0,dir:1,curCol:top.col,over:false,winner:null,stack:0};
+}
 
-// ============================================================
-// CARD COMPONENT
-// ============================================================
-function UnoCard({ card, onClick, isPlayable, isSmall, selected, faceDown, style }) {
-  const col = faceDown ? "#1a1a2e" : COLOR_HEX[card?.color] || "#BF5AF2";
-  const isWild = card?.type === "wild";
-  const displayVal = CARD_VALUE_ICONS[card?.value] || card?.value;
+/* ─────────────────────────────────────────────
+   SVG CARD COMPONENTS
+───────────────────────────────────────────── */
+const LBL={Skip:"⊗",Rev:"⇌","+2":"+2",Wild:"✦","W+4":"+4"};
 
-  return (
-    <div
-      onClick={isPlayable && onClick ? onClick : undefined}
-      style={{
-        width: isSmall ? 48 : 72,
-        height: isSmall ? 72 : 108,
-        borderRadius: 12,
-        background: faceDown
-          ? "linear-gradient(135deg, #0d0d1a 0%, #1a1a3e 100%)"
-          : `linear-gradient(145deg, ${col}ee, ${col}99)`,
-        border: selected
-          ? "3px solid #fff"
-          : isPlayable
-          ? `2px solid ${col}cc`
-          : "2px solid rgba(255,255,255,0.08)",
-        boxShadow: selected
-          ? `0 0 24px 6px ${col}, 0 8px 24px rgba(0,0,0,0.5)`
-          : isPlayable
-          ? `0 4px 16px ${col}66, 0 2px 8px rgba(0,0,0,0.4)`
-          : "0 2px 8px rgba(0,0,0,0.3)",
-        cursor: isPlayable ? "pointer" : "default",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        position: "relative",
-        transform: selected ? "translateY(-18px) scale(1.08)" : isPlayable ? "translateY(-4px)" : "translateY(0)",
-        transition: "all 0.2s cubic-bezier(.34,1.56,.64,1)",
-        flexShrink: 0,
-        userSelect: "none",
-        ...style,
-      }}
-    >
-      {faceDown ? (
-        <div style={{ fontSize: isSmall ? 18 : 28, color: "#BF5AF2", fontWeight: 900, fontFamily: "'Exo 2', sans-serif" }}>
-          UNO
-        </div>
-      ) : (
-        <>
-          {/* Top-left value */}
-          <div
-            style={{
-              position: "absolute",
-              top: 4,
-              left: 6,
-              fontSize: isSmall ? 10 : 14,
-              fontWeight: 900,
-              color: "#fff",
-              textShadow: "0 1px 4px rgba(0,0,0,0.6)",
-              fontFamily: "'Exo 2', sans-serif",
-              lineHeight: 1,
-            }}
-          >
-            {displayVal}
-          </div>
-          {/* Center */}
-          <div
-            style={{
-              fontSize: isSmall ? 20 : 30,
-              fontWeight: 900,
-              color: "#fff",
-              textShadow: `0 0 16px rgba(255,255,255,0.8), 0 2px 8px rgba(0,0,0,0.5)`,
-              fontFamily: "'Exo 2', sans-serif",
-              background: isWild
-                ? "conic-gradient(#FF2D55 0% 25%, #FFD60A 25% 50%, #30D158 50% 75%, #0A84FF 75% 100%)"
-                : "rgba(255,255,255,0.15)",
-              WebkitBackgroundClip: isWild ? "text" : undefined,
-              WebkitTextFillColor: isWild ? "transparent" : undefined,
-              borderRadius: isSmall ? 6 : 8,
-              width: isSmall ? 28 : 44,
-              height: isSmall ? 28 : 44,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              border: "2px solid rgba(255,255,255,0.25)",
-            }}
-          >
-            {displayVal}
-          </div>
-          {/* Bottom-right value (rotated) */}
-          <div
-            style={{
-              position: "absolute",
-              bottom: 4,
-              right: 6,
-              fontSize: isSmall ? 10 : 14,
-              fontWeight: 900,
-              color: "#fff",
-              textShadow: "0 1px 4px rgba(0,0,0,0.6)",
-              fontFamily: "'Exo 2', sans-serif",
-              transform: "rotate(180deg)",
-              lineHeight: 1,
-            }}
-          >
-            {displayVal}
-          </div>
-        </>
-      )}
-    </div>
+function CardFace({card,w=68,h=102,glow,lift,dim}){
+  const isWild=card.kind==="wild";
+  const base=C[card.col]||C.wild;
+  const lbl=LBL[card.val]??card.val;
+  const isDark=card.col==="blue"||card.col==="wild"||card.col==="green";
+  const txtCol=isDark?"#FDF0D5":card.col==="yellow"?"#2a1a00":"#FDF0D5";
+  const fs=lbl.length>2?20:26;
+
+  const filterStr=glow
+    ?`drop-shadow(0 0 12px ${base}) drop-shadow(0 0 28px ${base}88) drop-shadow(0 4px 12px #0009)`
+    :lift
+    ?`drop-shadow(0 8px 20px ${base}66) drop-shadow(0 3px 8px #000a)`
+    :`drop-shadow(0 3px 7px #0008)`;
+
+  return(
+    <svg width={w} height={h} viewBox="0 0 68 102" style={{display:"block",flexShrink:0,filter:filterStr,opacity:dim?0.38:1}}>
+      <defs>
+        <linearGradient id={`c-${card.col}-${card.val}-a`} x1="20%" y1="0%" x2="80%" y2="100%">
+          <stop offset="0%" stopColor={isWild?"#7B3FBE":base} stopOpacity="1"/>
+          <stop offset="100%" stopColor={isWild?"#2E1060":base} stopOpacity="0.7"/>
+        </linearGradient>
+        <radialGradient id={`c-${card.col}-${card.val}-b`} cx="30%" cy="30%" r="70%">
+          <stop offset="0%" stopColor="rgba(255,255,255,0.18)"/>
+          <stop offset="100%" stopColor="rgba(0,0,0,0)"/>
+        </radialGradient>
+        {isWild&&<linearGradient id="wg" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%"   stopColor="#C0392B"/>
+          <stop offset="33%"  stopColor="#D4A017"/>
+          <stop offset="66%"  stopColor="#1A6B3C"/>
+          <stop offset="100%" stopColor="#154F8A"/>
+        </linearGradient>}
+        <clipPath id="cc"><rect x="2" y="2" width="64" height="98" rx="8"/></clipPath>
+      </defs>
+
+      {/* Body */}
+      <rect x="2" y="2" width="64" height="98" rx="8" fill={`url(#c-${card.col}-${card.val}-a)`}/>
+      <rect x="2" y="2" width="64" height="98" rx="8" fill={`url(#c-${card.col}-${card.val}-b)`}/>
+
+      {/* Gold filigree border */}
+      <rect x="2" y="2" width="64" height="98" rx="8" fill="none" stroke={GOLD} strokeWidth="1.8" strokeOpacity="0.65"/>
+      {/* inner thin line */}
+      <rect x="5" y="5" width="58" height="92" rx="6" fill="none" stroke={GOLD} strokeWidth="0.5" strokeOpacity="0.3"/>
+
+      {/* Diamond pattern bg */}
+      <g clipPath="url(#cc)" opacity="0.06">
+        {[0,1,2,3,4,5,6].map(r=>[0,1,2,3,4].map(cc2=>(
+          <polygon key={`${r}-${cc2}`}
+            points={`${cc2*16-4+r%2*8},${r*14} ${cc2*16+4+r%2*8},${r*14} ${cc2*16+r%2*8},${r*14+7}`}
+            fill="rgba(255,255,255,0.8)"/>
+        )))}
+      </g>
+
+      {/* Center oval */}
+      <ellipse cx="34" cy="51" rx="20" ry="32" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.22)" strokeWidth="1"/>
+      {isWild&&<ellipse cx="34" cy="51" rx="14" ry="22" fill="url(#wg)" opacity="0.9"/>}
+
+      {/* Center symbol */}
+      <text x="34" y="54" textAnchor="middle" dominantBaseline="middle"
+        fontFamily="'Playfair Display', 'Georgia', serif" fontWeight="900"
+        fontSize={fs} fill={isWild?"#fff":txtCol}
+        stroke="rgba(0,0,0,0.3)" strokeWidth="0.5">{lbl}</text>
+
+      {/* TL corner */}
+      <text x="8" y="16" fontFamily="'Playfair Display', serif" fontWeight="700"
+        fontSize="11" fill={txtCol} opacity="0.9">{lbl}</text>
+      {/* BR corner rotated */}
+      <g transform="rotate(180,60,86)">
+        <text x="60" y="86" textAnchor="middle" dominantBaseline="middle"
+          fontFamily="'Playfair Display', serif" fontWeight="700"
+          fontSize="11" fill={txtCol} opacity="0.9">{lbl}</text>
+      </g>
+
+      {/* Shimmer accent */}
+      <line x1="9" y1="12" x2="59" y2="12" stroke="rgba(255,255,255,0.14)" strokeWidth="0.8"/>
+      <line x1="9" y1="90" x2="59" y2="90" stroke="rgba(255,255,255,0.08)" strokeWidth="0.8"/>
+    </svg>
   );
 }
 
-// ============================================================
-// COLOR PICKER
-// ============================================================
-function ColorPicker({ onSelect }) {
-  return (
-    <div
-      style={{
-        position: "fixed",
-        inset: 0,
-        background: "rgba(0,0,0,0.8)",
-        backdropFilter: "blur(12px)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        zIndex: 100,
-        animation: "fadeIn 0.2s ease",
-      }}
-    >
-      <div
-        style={{
-          background: "linear-gradient(135deg, #0d0d1a, #1a1a3e)",
-          border: "1px solid rgba(255,255,255,0.12)",
-          borderRadius: 24,
-          padding: 40,
-          textAlign: "center",
-          boxShadow: "0 32px 80px rgba(0,0,0,0.7)",
-        }}
-      >
-        <div
-          style={{
-            fontSize: 22,
-            fontWeight: 800,
-            color: "#fff",
-            marginBottom: 28,
-            fontFamily: "'Exo 2', sans-serif",
-            letterSpacing: 2,
-            textTransform: "uppercase",
-          }}
-        >
-          Choose a Color
-        </div>
-        <div style={{ display: "flex", gap: 16, justifyContent: "center" }}>
-          {COLORS.map((c) => (
-            <button
-              key={c}
-              onClick={() => onSelect(c)}
-              style={{
-                width: 64,
-                height: 64,
-                borderRadius: "50%",
-                background: COLOR_HEX[c],
-                border: "3px solid rgba(255,255,255,0.2)",
-                cursor: "pointer",
-                boxShadow: `0 0 24px ${COLOR_HEX[c]}88`,
-                transition: "all 0.15s ease",
-                fontSize: 0,
-              }}
-              onMouseEnter={(e) => {
-                e.target.style.transform = "scale(1.2)";
-                e.target.style.boxShadow = `0 0 40px ${COLOR_HEX[c]}`;
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.transform = "scale(1)";
-                e.target.style.boxShadow = `0 0 24px ${COLOR_HEX[c]}88`;
-              }}
-            />
+function CardBack({w=68,h=102,sm}){
+  const sw=sm?44:w, sh=sm?66:h;
+  return(
+    <svg width={sw} height={sh} viewBox="0 0 68 102" style={{display:"block",flexShrink:0,
+      filter:"drop-shadow(0 3px 8px #000a)"}}>
+      <defs>
+        <pattern id="bp" patternUnits="userSpaceOnUse" width="10" height="10" patternTransform="rotate(45)">
+          <line x1="0" y1="0" x2="0" y2="10" stroke={GOLD} strokeWidth="0.7" strokeOpacity="0.25"/>
+        </pattern>
+      </defs>
+      <rect x="2" y="2" width="64" height="98" rx="8" fill="#120820"/>
+      <rect x="2" y="2" width="64" height="98" rx="8" fill="url(#bp)"/>
+      <rect x="2" y="2" width="64" height="98" rx="8" fill="none" stroke={GOLD} strokeWidth="1.8" strokeOpacity="0.55"/>
+      <rect x="6" y="6" width="56" height="90" rx="6" fill="none" stroke={GOLD} strokeWidth="0.5" strokeOpacity="0.25"/>
+      <ellipse cx="34" cy="51" rx="18" ry="28" fill="none" stroke={GOLD} strokeWidth="0.8" strokeOpacity="0.4"/>
+      <text x="34" y="55" textAnchor="middle" dominantBaseline="middle"
+        fontFamily="'Playfair Display', serif" fontWeight="900" fontSize="15"
+        fill={GOLD} opacity="0.75">UNO</text>
+    </svg>
+  );
+}
+
+/* ─────────────────────────────────────────────
+   COLOR PICKER MODAL
+───────────────────────────────────────────── */
+function ColorModal({onPick}){
+  return(
+    <div style={{position:"fixed",inset:0,zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",
+      background:"rgba(4,12,6,0.9)",backdropFilter:"blur(16px)"}}>
+      <div style={{
+        background:`linear-gradient(160deg,#0a2214,#050d08)`,
+        border:`1.5px solid ${GOLD}55`,borderRadius:22,
+        padding:"44px 56px",textAlign:"center",
+        boxShadow:`0 0 0 1px ${GOLD}11, 0 40px 100px rgba(0,0,0,0.75), inset 0 1px 0 ${GOLD}22`}}>
+        <div style={{fontFamily:"'Playfair Display',serif",color:GOLD,fontSize:24,fontWeight:700,
+          letterSpacing:2,marginBottom:6}}>Choose a Color</div>
+        <div style={{fontFamily:"'DM Mono',monospace",color:CREAM,opacity:0.35,fontSize:11,
+          letterSpacing:4,textTransform:"uppercase",marginBottom:36}}>Select active color</div>
+        <div style={{display:"flex",gap:18,justifyContent:"center"}}>
+          {COLORS.map(c=>(
+            <button key={c} onClick={()=>onPick(c)} style={{
+              width:68,height:68,borderRadius:14,background:C[c],
+              border:`2px solid ${GOLD}44`,cursor:"pointer",
+              transition:"all 0.16s ease",outline:"none",
+              boxShadow:`0 4px 16px ${C[c]}55`
+            }}
+              onMouseEnter={e=>{e.currentTarget.style.transform="scale(1.15) translateY(-4px)";e.currentTarget.style.boxShadow=`0 10px 32px ${C[c]}, 0 0 0 3px ${GOLD}66`;}}
+              onMouseLeave={e=>{e.currentTarget.style.transform="scale(1)";e.currentTarget.style.boxShadow=`0 4px 16px ${C[c]}55`;}}/>
           ))}
         </div>
       </div>
@@ -238,708 +184,590 @@ function ColorPicker({ onSelect }) {
   );
 }
 
-// ============================================================
-// TOAST NOTIFICATION
-// ============================================================
-function Toast({ messages }) {
-  return (
-    <div
-      style={{
-        position: "fixed",
-        top: 20,
-        left: "50%",
-        transform: "translateX(-50%)",
-        zIndex: 200,
-        display: "flex",
-        flexDirection: "column",
-        gap: 8,
-        alignItems: "center",
-        pointerEvents: "none",
-      }}
-    >
-      {messages.map((m) => (
-        <div
-          key={m.id}
-          style={{
-            background: m.color ? `${COLOR_HEX[m.color] || m.color}cc` : "rgba(255,255,255,0.15)",
-            backdropFilter: "blur(16px)",
-            border: `1px solid ${m.color ? COLOR_HEX[m.color] || m.color : "rgba(255,255,255,0.2)"}55`,
-            borderRadius: 50,
-            padding: "10px 24px",
-            color: "#fff",
-            fontWeight: 700,
-            fontSize: 15,
-            fontFamily: "'Exo 2', sans-serif",
-            letterSpacing: 1,
-            boxShadow: `0 8px 32px rgba(0,0,0,0.4)`,
-            animation: "toastIn 0.3s cubic-bezier(.34,1.56,.64,1)",
-            whiteSpace: "nowrap",
-          }}
-        >
-          {m.text}
-        </div>
+/* ─────────────────────────────────────────────
+   TOAST NOTIFICATIONS
+───────────────────────────────────────────── */
+function Toasts({list}){
+  return(
+    <div style={{position:"fixed",bottom:210,left:"50%",transform:"translateX(-50%)",
+      zIndex:400,display:"flex",flexDirection:"column",gap:6,alignItems:"center",pointerEvents:"none"}}>
+      {list.map(t=>(
+        <div key={t.id} style={{
+          padding:"9px 26px",borderRadius:40,
+          background:t.accent?`${C[t.accent]||t.accent}dd`:`rgba(201,168,76,0.2)`,
+          backdropFilter:"blur(12px)",
+          border:`1px solid ${t.accent?C[t.accent]||t.accent:GOLD}55`,
+          color:CREAM,fontSize:13,fontWeight:600,letterSpacing:1,
+          fontFamily:"'DM Mono',monospace",
+          boxShadow:"0 6px 24px rgba(0,0,0,0.55)",
+          animation:"toastUp 0.3s cubic-bezier(.34,1.56,.64,1)",
+          whiteSpace:"nowrap"
+        }}>{t.txt}</div>
       ))}
     </div>
   );
 }
 
-// ============================================================
-// PLAYER AVATAR
-// ============================================================
-function PlayerAvatar({ player, isActive, cardCount, isUno }) {
-  const colors = ["#FF2D55", "#0A84FF", "#30D158", "#FFD60A", "#BF5AF2", "#FF9F0A"];
-  const col = colors[player.id % colors.length];
-  return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        gap: 6,
-        padding: "12px 16px",
-        borderRadius: 16,
-        background: isActive ? `${col}22` : "rgba(255,255,255,0.03)",
-        border: isActive ? `2px solid ${col}` : "2px solid rgba(255,255,255,0.06)",
-        boxShadow: isActive ? `0 0 20px ${col}44` : "none",
-        transition: "all 0.3s ease",
-        minWidth: 80,
+/* ─────────────────────────────────────────────
+   WIN SCREEN
+───────────────────────────────────────────── */
+function WinScreen({winner,onReplay}){
+  return(
+    <div style={{position:"fixed",inset:0,zIndex:300,display:"flex",alignItems:"center",justifyContent:"center",
+      background:"rgba(4,12,6,0.97)",backdropFilter:"blur(28px)",flexDirection:"column",gap:28}}>
+      <div style={{position:"relative",width:160,height:160,display:"flex",alignItems:"center",justifyContent:"center"}}>
+        <div style={{position:"absolute",inset:0,borderRadius:"50%",
+          border:`2.5px solid ${GOLD}`,animation:"spinSlow 6s linear infinite",
+          boxShadow:`0 0 40px ${GOLD}44`}}/>
+        <div style={{position:"absolute",inset:16,borderRadius:"50%",border:`1px solid ${GOLD}44`}}/>
+        <svg width="60" height="60" viewBox="0 0 60 60">
+          <text x="30" y="36" textAnchor="middle" dominantBaseline="middle"
+            fontFamily="'Playfair Display',serif" fontSize="36" fontWeight="900"
+            fill={GOLD} style={{filter:`drop-shadow(0 0 12px ${GOLD})`}}>✦</text>
+        </svg>
+      </div>
+      <div style={{textAlign:"center"}}>
+        <div style={{fontFamily:"'Playfair Display',serif",fontWeight:900,fontSize:52,color:GOLD,
+          letterSpacing:6,textTransform:"uppercase",
+          textShadow:`0 0 60px ${GOLD}88,0 4px 16px #0009`}}>{winner}</div>
+        <div style={{fontFamily:"'DM Mono',monospace",color:CREAM,opacity:0.35,fontSize:13,
+          letterSpacing:6,marginTop:8,textTransform:"uppercase"}}>wins the round</div>
+      </div>
+      <button onClick={onReplay} style={{
+        padding:"15px 52px",borderRadius:50,
+        background:`linear-gradient(135deg,${GOLD},#7A5A10)`,
+        border:"none",color:DARK,fontSize:14,fontWeight:700,
+        fontFamily:"'DM Mono',monospace",letterSpacing:4,textTransform:"uppercase",
+        cursor:"pointer",boxShadow:`0 8px 32px ${GOLD}55`,transition:"all 0.2s"
       }}
-    >
-      <div
-        style={{
-          width: 40,
-          height: 40,
-          borderRadius: "50%",
-          background: `linear-gradient(135deg, ${col}, ${col}88)`,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          fontSize: 18,
-          fontWeight: 900,
-          color: "#fff",
-          fontFamily: "'Exo 2', sans-serif",
-          boxShadow: isActive ? `0 0 16px ${col}` : "none",
-          border: isUno ? "3px solid #FFD60A" : "2px solid rgba(255,255,255,0.2)",
-          animation: isUno ? "unoPulse 0.8s ease infinite" : "none",
-        }}
-      >
-        {player.name[0]}
-      </div>
-      <div style={{ fontSize: 11, fontWeight: 700, color: isActive ? "#fff" : "rgba(255,255,255,0.5)", fontFamily: "'Exo 2', sans-serif", letterSpacing: 0.5 }}>
-        {player.name}
-      </div>
-      <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-        <span style={{ fontSize: 12, color: isActive ? col : "rgba(255,255,255,0.4)", fontWeight: 800, fontFamily: "'Exo 2', sans-serif" }}>
-          {cardCount}
-        </span>
-        <span style={{ fontSize: 10, color: "rgba(255,255,255,0.3)", fontFamily: "'Exo 2', sans-serif" }}>cards</span>
-        {isUno && (
-          <span style={{ fontSize: 10, fontWeight: 900, color: "#FFD60A", fontFamily: "'Exo 2', sans-serif", marginLeft: 2 }}>
-            UNO!
-          </span>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// ============================================================
-// GAME OVER SCREEN
-// ============================================================
-function GameOverScreen({ winner, onRestart }) {
-  return (
-    <div
-      style={{
-        position: "fixed",
-        inset: 0,
-        background: "rgba(0,0,0,0.92)",
-        backdropFilter: "blur(20px)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        zIndex: 150,
-        flexDirection: "column",
-        gap: 32,
-      }}
-    >
-      <div style={{ textAlign: "center", animation: "popIn 0.5s cubic-bezier(.34,1.56,.64,1)" }}>
-        <div style={{ fontSize: 80, marginBottom: 8 }}>🎉</div>
-        <div
-          style={{
-            fontSize: 52,
-            fontWeight: 900,
-            background: "linear-gradient(135deg, #FFD60A, #FF9F0A, #FF2D55)",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-            fontFamily: "'Exo 2', sans-serif",
-            letterSpacing: 2,
-            textTransform: "uppercase",
-            marginBottom: 12,
-          }}
-        >
-          {winner} Wins!
-        </div>
-        <div style={{ fontSize: 18, color: "rgba(255,255,255,0.5)", fontFamily: "'Exo 2', sans-serif", letterSpacing: 1 }}>
-          Game Over
-        </div>
-      </div>
-      <button
-        onClick={onRestart}
-        style={{
-          padding: "16px 48px",
-          borderRadius: 50,
-          background: "linear-gradient(135deg, #BF5AF2, #0A84FF)",
-          border: "none",
-          color: "#fff",
-          fontSize: 18,
-          fontWeight: 800,
-          fontFamily: "'Exo 2', sans-serif",
-          letterSpacing: 2,
-          textTransform: "uppercase",
-          cursor: "pointer",
-          boxShadow: "0 8px 32px rgba(191,90,242,0.5)",
-          transition: "all 0.2s ease",
-        }}
-        onMouseEnter={(e) => { e.target.style.transform = "scale(1.05)"; e.target.style.boxShadow = "0 12px 40px rgba(191,90,242,0.7)"; }}
-        onMouseLeave={(e) => { e.target.style.transform = "scale(1)"; e.target.style.boxShadow = "0 8px 32px rgba(191,90,242,0.5)"; }}
-      >
-        Play Again
+        onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-3px)";e.currentTarget.style.boxShadow=`0 16px 48px ${GOLD}88`;}}
+        onMouseLeave={e=>{e.currentTarget.style.transform="none";e.currentTarget.style.boxShadow=`0 8px 32px ${GOLD}55`;}}>
+        New Round
       </button>
     </div>
   );
 }
 
-// ============================================================
-// MAIN GAME
-// ============================================================
-const PLAYER_COUNT = 4;
-const HUMAN_ID = 0;
-
-function initGame() {
-  let deck = shuffle(createDeck());
-  const players = Array.from({ length: PLAYER_COUNT }, (_, i) => ({
-    id: i,
-    name: i === 0 ? "You" : `Bot ${i}`,
-    hand: [],
-    isHuman: i === 0,
-  }));
-  // Deal 7 cards
-  for (let i = 0; i < 7; i++) {
-    players.forEach((p) => {
-      p.hand.push(deck.pop());
-    });
-  }
-  // Find valid start card
-  let topCard;
-  do {
-    topCard = deck.pop();
-    if (topCard.type === "wild") deck.unshift(topCard);
-  } while (topCard.type === "wild");
-
-  return {
-    deck,
-    discardPile: [topCard],
-    players,
-    currentPlayer: 0,
-    direction: 1,
-    currentColor: topCard.color,
-    gameOver: false,
-    winner: null,
-    drawStack: 0,
-    skipped: false,
-  };
+/* ─────────────────────────────────────────────
+   PLAYER BADGE
+───────────────────────────────────────────── */
+function Seat({player,active,uno}){
+  const acc=[C.red,C.blue,C.green,C.yellow][player.id%4];
+  return(
+    <div style={{display:"flex",alignItems:"center",gap:10,padding:"8px 14px",borderRadius:50,
+      background:active?`${acc}18`:"rgba(0,0,0,0.35)",
+      border:active?`1.5px solid ${acc}88`:`1.5px solid ${GOLD}18`,
+      boxShadow:active?`0 0 20px ${acc}33`:"none",transition:"all 0.35s"}}>
+      <div style={{width:32,height:32,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",
+        background:active?`radial-gradient(circle,${acc},${acc}88)`:`radial-gradient(circle,${GOLD}44,${GOLD}22)`,
+        fontFamily:"'Playfair Display',serif",fontWeight:900,color:"#fff",fontSize:14,
+        border:uno?`2.5px solid ${C.yellow}`:active?`2px solid ${acc}99`:`2px solid ${GOLD}33`,
+        boxShadow:uno?`0 0 12px ${C.yellow}`:active?`0 0 10px ${acc}55`:"none",
+        transition:"all 0.3s",flexShrink:0}}>
+        {player.name[0]}
+      </div>
+      <div>
+        <div style={{fontFamily:"'DM Mono',monospace",fontSize:11,fontWeight:600,letterSpacing:1,
+          color:active?CREAM:`${CREAM}44`,textTransform:"uppercase",lineHeight:1.2}}>
+          {player.id===0?"You":player.name}
+        </div>
+        <div style={{display:"flex",alignItems:"center",gap:6}}>
+          <span style={{fontFamily:"'Playfair Display',serif",fontSize:13,fontWeight:700,
+            color:active?GOLD:`${GOLD}44`}}>{player.hand.length} cards</span>
+          {uno&&<span style={{fontFamily:"'DM Mono',monospace",fontSize:9,color:C.yellow,
+            fontWeight:700,letterSpacing:1}}>UNO!</span>}
+        </div>
+      </div>
+    </div>
+  );
 }
 
-export default function UnoGame() {
-  const [game, setGame] = useState(null);
-  const [selectedCard, setSelectedCard] = useState(null);
-  const [showColorPicker, setShowColorPicker] = useState(false);
-  const [pendingWild, setPendingWild] = useState(null);
-  const [toasts, setToasts] = useState([]);
-  const toastId = useRef(0);
-  const botTimeout = useRef(null);
-  const [started, setStarted] = useState(false);
-  const [playerCount, setPlayerCount] = useState(3);
+/* ─────────────────────────────────────────────
+   MAIN APP
+───────────────────────────────────────────── */
+const HUMAN=0;
 
-  const addToast = useCallback((text, color) => {
-    const id = ++toastId.current;
-    setToasts((prev) => [...prev.slice(-3), { id, text, color }]);
-    setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 2500);
-  }, []);
+export default function App(){
+  const [screen,setScreen]=useState("menu");
+  const [numP,setNumP]=useState(3);
+  const [game,setGame]=useState(null);
+  const [selIdx,setSelIdx]=useState(null);
+  const [colorModal,setColorModal]=useState(false);
+  const [pendingIdx,setPendingIdx]=useState(null);
+  const [toasts,setToasts]=useState([]);
+  const tid=useRef(0);
+  const botRef=useRef(null);
 
-  const startGame = useCallback(() => {
-    const newGame = initGame();
-    // Trim to playerCount
-    newGame.players = newGame.players.slice(0, playerCount);
-    setGame(newGame);
-    setStarted(true);
-    setSelectedCard(null);
-    addToast("Game Started! Good luck 🎮", "#BF5AF2");
-  }, [playerCount, addToast]);
+  const toast=useCallback((txt,accent)=>{
+    const id=++tid.current;
+    setToasts(p=>[...p.slice(-2),{id,txt,accent}]);
+    setTimeout(()=>setToasts(p=>p.filter(t=>t.id!==id)),2500);
+  },[]);
 
-  // Process special effects of played card
-  const applyCardEffect = useCallback((g, card, playerId) => {
-    const n = g.players.length;
-    let next = (g.currentPlayer + g.direction + n) % n;
+  const startGame=useCallback(()=>{
+    setGame(newGame(numP));
+    setScreen("game");
+    setSelIdx(null);
+    toast("Cards dealt — good luck!",GOLD);
+  },[numP,toast]);
 
-    if (card.value === "Reverse") {
-      g.direction *= -1;
-      if (n === 2) {
-        // Reverse acts as Skip in 2-player
-        next = (g.currentPlayer + g.direction + n) % n;
-      } else {
-        next = (g.currentPlayer + g.direction + n) % n;
-      }
-      addToast(`${g.players[playerId].name} reversed direction!`, "wild");
-    } else if (card.value === "Skip") {
-      next = (next + g.direction + n) % n;
-      addToast(`${g.players[next === (g.currentPlayer + g.direction + n) % n ? playerId : (next - g.direction + n) % n].name} skipped ${g.players[next].name}!`, card.color);
-    } else if (card.value === "+2") {
-      g.drawStack += 2;
-      addToast(`+2 cards for ${g.players[next].name}!`, card.color);
-    } else if (card.value === "Wild +4") {
-      g.drawStack += 4;
-      addToast(`Wild +4! ${g.players[next].name} draws 4!`, "wild");
+  const applyEffect=useCallback((g,card,pid)=>{
+    const n=g.players.length;
+    let next=(g.cur+g.dir+n)%n;
+    if(card.val==="Rev"){
+      g.dir*=-1; next=(g.cur+g.dir+n)%n;
+      toast(`${g.players[pid].name} reversed direction!`,"wild");
+    } else if(card.val==="Skip"){
+      const skip=next; next=(next+g.dir+n)%n;
+      toast(`${g.players[skip].name} is skipped!`,card.col);
+    } else if(card.val==="+2"){
+      g.stack+=2;
+      toast(`+2 draw penalty!`,card.col);
+    } else if(card.val==="W+4"){
+      g.stack+=4;
+      toast(`Wild +4 — draw ${g.stack}!`,"wild");
     }
+    g.cur=next; return g;
+  },[toast]);
 
-    g.currentPlayer = next;
-    return g;
-  }, [addToast]);
-
-  const drawCards = useCallback((g, playerId, count) => {
-    for (let i = 0; i < count; i++) {
-      if (g.deck.length === 0) {
-        const top = g.discardPile.pop();
-        g.deck = shuffle(g.discardPile);
-        g.discardPile = [top];
-      }
-      if (g.deck.length > 0) {
-        g.players[playerId].hand.push(g.deck.pop());
-      }
+  const drawN=useCallback((g,pid,n)=>{
+    for(let i=0;i<n;i++){
+      if(g.deck.length===0){const top=g.pile.pop();g.deck=shuffle(g.pile);g.pile=[top];}
+      if(g.deck.length>0) g.players[pid].hand.push(g.deck.pop());
     }
     return g;
-  }, []);
+  },[]);
 
-  const playCard = useCallback((cardIdx, chosenColor) => {
-    setGame((prev) => {
-      if (!prev || prev.currentPlayer !== HUMAN_ID || prev.gameOver) return prev;
-      const g = JSON.parse(JSON.stringify(prev));
-      const card = g.players[HUMAN_ID].hand[cardIdx];
-      const topCard = g.discardPile[g.discardPile.length - 1];
-      if (!canPlay(card, topCard, g.currentColor)) return prev;
-
-      g.players[HUMAN_ID].hand.splice(cardIdx, 1);
-      g.discardPile.push(card);
-      g.currentColor = card.type === "wild" ? chosenColor : card.color;
-
-      addToast(`You played ${card.value}!`, card.color === "wild" ? chosenColor : card.color);
-
-      if (g.players[HUMAN_ID].hand.length === 0) {
-        g.gameOver = true;
-        g.winner = "You";
-        return g;
-      }
-      if (g.players[HUMAN_ID].hand.length === 1) {
-        addToast("UNO! 🃏", "#FFD60A");
-      }
-
-      return applyCardEffect(g, card, HUMAN_ID);
+  const doPlay=useCallback((idx,chosenCol)=>{
+    setGame(prev=>{
+      if(!prev||prev.cur!==HUMAN||prev.over) return prev;
+      const g=JSON.parse(JSON.stringify(prev));
+      const card=g.players[HUMAN].hand[idx];
+      const top=g.pile[g.pile.length-1];
+      if(!canPlay(card,top,g.curCol)) return prev;
+      g.players[HUMAN].hand.splice(idx,1);
+      g.pile.push(card);
+      g.curCol=card.kind==="wild"?chosenCol:card.col;
+      toast(`You played ${card.val}`,card.col==="wild"?chosenCol:card.col);
+      if(g.players[HUMAN].hand.length===0){g.over=true;g.winner="You";return g;}
+      if(g.players[HUMAN].hand.length===1) toast("UNO!",C.yellow);
+      return applyEffect(g,card,HUMAN);
     });
-    setSelectedCard(null);
-  }, [addToast, applyCardEffect]);
+    setSelIdx(null);
+  },[toast,applyEffect]);
 
-  const handleCardClick = useCallback((idx) => {
-    if (!game || game.currentPlayer !== HUMAN_ID || game.gameOver) return;
-    const card = game.players[HUMAN_ID].hand[idx];
-    const topCard = game.discardPile[game.discardPile.length - 1];
-    if (!canPlay(card, topCard, game.currentColor)) {
-      addToast("Can't play that card!", "#FF2D55");
-      return;
-    }
-    if (card.type === "wild") {
-      setSelectedCard(idx);
-      setPendingWild(idx);
-      setShowColorPicker(true);
-    } else {
-      setSelectedCard(idx);
-      setTimeout(() => playCard(idx, null), 150);
-    }
-  }, [game, addToast, playCard]);
+  const handleCardClick=useCallback((idx)=>{
+    if(!game||game.cur!==HUMAN||game.over) return;
+    const card=game.players[HUMAN].hand[idx];
+    const top=game.pile[game.pile.length-1];
+    if(!canPlay(card,top,game.curCol)){toast("That card can't be played","#8B0000");return;}
+    if(card.kind==="wild"){setSelIdx(idx);setPendingIdx(idx);setColorModal(true);}
+    else{setSelIdx(idx);setTimeout(()=>doPlay(idx,null),130);}
+  },[game,toast,doPlay]);
 
-  const handleDraw = useCallback(() => {
-    setGame((prev) => {
-      if (!prev || prev.currentPlayer !== HUMAN_ID || prev.gameOver) return prev;
-      const g = JSON.parse(JSON.stringify(prev));
-      const drawCount = g.drawStack > 0 ? g.drawStack : 1;
-      drawCards(g, HUMAN_ID, drawCount);
-      g.drawStack = 0;
-      addToast(`You drew ${drawCount} card${drawCount > 1 ? "s" : ""}`, "#0A84FF");
-      const n = g.players.length;
-      g.currentPlayer = (g.currentPlayer + g.direction + n) % n;
+  const handleDraw=useCallback(()=>{
+    setGame(prev=>{
+      if(!prev||prev.cur!==HUMAN||prev.over) return prev;
+      const g=JSON.parse(JSON.stringify(prev));
+      const n=g.stack>0?g.stack:1;
+      drawN(g,HUMAN,n);
+      if(g.stack>0){toast(`You drew ${n} cards`,"#154F8A");g.stack=0;}
+      else toast("Drew a card","#154F8A");
+      const len=g.players.length;
+      g.cur=(g.cur+g.dir+len)%len;
       return g;
     });
-  }, [drawCards, addToast]);
+  },[drawN,toast]);
 
-  // BOT AI
-  useEffect(() => {
-    if (!game || game.gameOver || game.currentPlayer === HUMAN_ID) return;
-    botTimeout.current = setTimeout(() => {
-      setGame((prev) => {
-        if (!prev || prev.currentPlayer === HUMAN_ID || prev.gameOver) return prev;
-        const g = JSON.parse(JSON.stringify(prev));
-        const botId = g.currentPlayer;
-        const bot = g.players[botId];
-        const topCard = g.discardPile[g.discardPile.length - 1];
-
-        // If drawStack, must draw
-        if (g.drawStack > 0) {
-          const nextPlayer = g.players[(botId + g.direction + g.players.length) % g.players.length];
-          const hasCounter = bot.hand.some((c) =>
-            (c.value === "+2" && g.drawStack <= 2) ||
-            (c.value === "Wild +4")
-          );
-          if (!hasCounter) {
-            drawCards(g, botId, g.drawStack);
-            g.drawStack = 0;
-            addToast(`${bot.name} drew ${g.drawStack || "forced"} cards`, "#0A84FF");
-            g.currentPlayer = (botId + g.direction + g.players.length) % g.players.length;
-            return g;
+  /* BOT */
+  useEffect(()=>{
+    if(!game||game.over||game.cur===HUMAN) return;
+    botRef.current=setTimeout(()=>{
+      setGame(prev=>{
+        if(!prev||prev.cur===HUMAN||prev.over) return prev;
+        const g=JSON.parse(JSON.stringify(prev));
+        const bid=g.cur, bot=g.players[bid];
+        const top=g.pile[g.pile.length-1];
+        const n=g.players.length;
+        if(g.stack>0){
+          const canBlock=bot.hand.some(c=>c.val==="+2"||c.val==="W+4");
+          if(!canBlock){
+            drawN(g,bid,g.stack);
+            toast(`${bot.name} drew ${g.stack}`,C.red);
+            g.stack=0;g.cur=(bid+g.dir+n)%n;return g;
           }
         }
-
-        // Find best card to play
-        const playable = bot.hand
-          .map((c, i) => ({ card: c, idx: i }))
-          .filter(({ card }) => canPlay(card, topCard, g.currentColor));
-
-        if (playable.length === 0) {
-          drawCards(g, botId, 1);
-          addToast(`${bot.name} drew a card`, "rgba(255,255,255,0.4)");
-          g.currentPlayer = (botId + g.direction + g.players.length) % g.players.length;
-          return g;
+        const playable=bot.hand.map((c,i)=>({c,i})).filter(({c})=>canPlay(c,top,g.curCol));
+        if(!playable.length){
+          drawN(g,bid,1);toast(`${bot.name} draws`,`${GOLD}88`);
+          g.cur=(bid+g.dir+n)%n;return g;
         }
-
-        // Priority: action > number, avoid wild if possible
-        let chosen = playable.find((p) => p.card.type === "action") || playable[0];
-
-        const card = chosen.card;
-        bot.hand.splice(chosen.idx, 1);
-        g.discardPile.push(card);
-
-        let chosenColor = card.color;
-        if (card.type === "wild") {
-          const counts = {};
-          COLORS.forEach((c) => (counts[c] = 0));
-          bot.hand.forEach((c) => { if (c.color !== "wild") counts[c.color]++; });
-          chosenColor = COLORS.reduce((a, b) => (counts[a] >= counts[b] ? a : b));
+        let pick=playable.find(({c})=>c.val==="+2")||
+                 playable.find(({c})=>c.val==="Skip")||
+                 playable.find(({c})=>c.val==="Rev")||
+                 (bot.hand.length<=3&&playable.find(({c})=>c.val==="W+4"))||
+                 playable.find(({c})=>c.kind!=="wild")||
+                 playable[0];
+        const card=pick.c;
+        bot.hand.splice(pick.i,1);
+        g.pile.push(card);
+        let cc=card.col;
+        if(card.kind==="wild"){
+          const cnt={red:0,yellow:0,green:0,blue:0};
+          bot.hand.forEach(c=>{if(c.col!=="wild")cnt[c.col]++;});
+          cc=COLORS.reduce((a,b)=>cnt[a]>=cnt[b]?a:b);
         }
-        g.currentColor = card.type === "wild" ? chosenColor : card.color;
-
-        addToast(`${bot.name} played ${card.value}`, card.color === "wild" ? chosenColor : card.color);
-
-        if (bot.hand.length === 0) {
-          g.gameOver = true;
-          g.winner = bot.name;
-          return g;
-        }
-        if (bot.hand.length === 1) {
-          addToast(`${bot.name} says UNO! 🃏`, "#FFD60A");
-        }
-
-        return applyCardEffect(g, card, botId);
+        g.curCol=card.kind==="wild"?cc:card.col;
+        toast(`${bot.name} played ${card.val}`,g.curCol);
+        if(!bot.hand.length){g.over=true;g.winner=bot.name;return g;}
+        if(bot.hand.length===1) toast(`${bot.name} — UNO!`,C.yellow);
+        return applyEffect(g,card,bid);
       });
-    }, 900 + Math.random() * 600);
+    },820+Math.random()*580);
+    return()=>clearTimeout(botRef.current);
+  },[game,toast,applyEffect,drawN]);
 
-    return () => clearTimeout(botTimeout.current);
-  }, [game, addToast, applyCardEffect, drawCards]);
+  /* ── MENU ── */
+  if(screen==="menu") return(
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=DM+Mono:wght@400;500&display=swap');
+        *{box-sizing:border-box;margin:0;padding:0;}
+        body{background:${DARK};overflow:hidden;}
+        @keyframes drift{0%,100%{transform:translateY(0) rotate(var(--r,0deg))}50%{transform:translateY(-18px) rotate(var(--r2,4deg))}}
+        @keyframes spinSlow{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+        @keyframes fadeIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+      `}</style>
+      <div style={{width:"100vw",height:"100vh",overflow:"hidden",position:"relative",
+        background:`radial-gradient(ellipse at 38% 55%, #0e3a1e 0%, #071510 45%, ${DARK} 100%)`}}>
 
-  const humanHand = game?.players[HUMAN_ID]?.hand || [];
-  const topCard = game?.discardPile?.[game.discardPile.length - 1];
-  const isMyTurn = game?.currentPlayer === HUMAN_ID;
+        {/* Diagonal stripe texture */}
+        <div style={{position:"absolute",inset:0,pointerEvents:"none",opacity:0.07,
+          backgroundImage:`repeating-linear-gradient(-45deg,${GOLD} 0,${GOLD} 1px,transparent 0,transparent 50%)`,
+          backgroundSize:"12px 12px"}}/>
 
-  if (!started) {
-    return (
-      <>
-        <style>{`
-          @import url('https://fonts.googleapis.com/css2?family=Exo+2:wght@400;600;700;800;900&display=swap');
-          * { box-sizing: border-box; margin: 0; padding: 0; }
-          body { background: #080812; overflow: hidden; }
-          @keyframes float { 0%,100%{transform:translateY(0) rotate(0deg)} 50%{transform:translateY(-20px) rotate(5deg)} }
-          @keyframes pulse { 0%,100%{opacity:0.4} 50%{opacity:0.8} }
-          @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
-        `}</style>
-        <div style={{
-          width: "100vw", height: "100vh", background: "#080812",
-          display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column",
-          fontFamily: "'Exo 2', sans-serif", overflow: "hidden", position: "relative",
-        }}>
-          {/* Animated background cards */}
-          {[...Array(6)].map((_, i) => (
-            <div key={i} style={{
-              position: "absolute",
-              width: 60, height: 90, borderRadius: 10,
-              background: `linear-gradient(135deg, ${Object.values(COLOR_HEX)[i % 5]}88, ${Object.values(COLOR_HEX)[(i+2)%5]}44)`,
-              border: `1px solid ${Object.values(COLOR_HEX)[i % 5]}44`,
-              left: `${10 + i * 15}%`, top: `${10 + (i % 3) * 25}%`,
-              animation: `float ${3 + i * 0.7}s ease-in-out infinite`,
-              animationDelay: `${i * 0.5}s`,
-              opacity: 0.3,
-            }} />
-          ))}
+        {/* Oval table ring */}
+        <div style={{position:"absolute",inset:"60px 80px",borderRadius:200,
+          border:`1px solid ${GOLD}22`,boxShadow:`inset 0 0 80px rgba(0,0,0,0.5)`,
+          pointerEvents:"none"}}/>
+        <div style={{position:"absolute",inset:"70px 90px",borderRadius:200,
+          border:`1px solid ${GOLD}0f`,pointerEvents:"none"}}/>
 
-          {/* Logo */}
-          <div style={{
-            fontSize: 96, fontWeight: 900,
-            background: "linear-gradient(135deg, #FF2D55 0%, #FFD60A 25%, #30D158 50%, #0A84FF 75%, #BF5AF2 100%)",
-            WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
-            letterSpacing: 8, textTransform: "uppercase", marginBottom: 8,
-            filter: "drop-shadow(0 0 40px rgba(191,90,242,0.4))",
-          }}>UNO</div>
-          <div style={{ fontSize: 16, color: "rgba(255,255,255,0.4)", letterSpacing: 6, marginBottom: 60, textTransform: "uppercase" }}>
-            Card Game
+        {/* Corner ornaments */}
+        {[{top:0,left:0,rot:0},{top:0,right:0,rot:90},{bottom:0,right:0,rot:180},{bottom:0,left:0,rot:270}].map((s,i)=>(
+          <div key={i} style={{position:"absolute",width:100,height:100,...{top:s.top,left:s.left,right:s.right,bottom:s.bottom},
+            opacity:0.2,pointerEvents:"none",transform:`rotate(${s.rot}deg)`}}>
+            <svg viewBox="0 0 100 100" width="100" height="100">
+              <path d="M0,0 L50,0 Q50,50 0,50 Z" fill="none" stroke={GOLD} strokeWidth="1.2"/>
+              <path d="M10,0 L50,0 Q50,40 10,0 Z" fill="none" stroke={GOLD} strokeWidth="0.6" opacity="0.5"/>
+              <circle cx="6" cy="6" r="3" fill={GOLD} opacity="0.7"/>
+              <circle cx="12" cy="12" r="1.5" fill={GOLD} opacity="0.4"/>
+            </svg>
+          </div>
+        ))}
+
+        {/* Floating cards */}
+        {[{col:"red",val:"7",kind:"num",x:"8%",y:"12%",r:"-15deg",r2:"-10deg",d:3.8},
+          {col:"blue",val:"Skip",kind:"act",x:"80%",y:"8%",r:"18deg",r2:"23deg",d:4.5},
+          {col:"green",val:"+2",kind:"act",x:"5%",y:"62%",r:"-8deg",r2:"-3deg",d:3.2},
+          {col:"yellow",val:"9",kind:"num",x:"84%",y:"68%",r:"22deg",r2:"17deg",d:5.1},
+          {col:"wild",val:"Wild",kind:"wild",x:"72%",y:"22%",r:"-12deg",r2:"-6deg",d:4}
+         ].map((c,i)=>(
+          <div key={i} style={{position:"absolute",left:c.x,top:c.y,opacity:0.15,
+            animation:`drift ${c.d}s ease-in-out infinite`,animationDelay:`${i*0.7}s`,
+            "--r":c.r,"--r2":c.r2,transform:`rotate(${c.r})`}}>
+            <CardFace card={c} w={54} h={81}/>
+          </div>
+        ))}
+
+        {/* Main */}
+        <div style={{position:"relative",zIndex:10,display:"flex",flexDirection:"column",
+          alignItems:"center",justifyContent:"center",height:"100%",gap:0,
+          animation:"fadeIn 0.6s ease both"}}>
+
+          {/* Logo area */}
+          <div style={{position:"relative",marginBottom:4,textAlign:"center"}}>
+            <div style={{fontFamily:"'Playfair Display',serif",fontWeight:900,fontSize:108,lineHeight:0.9,
+              WebkitTextStroke:`1.5px ${GOLD}`,color:"transparent",
+              letterSpacing:20,userSelect:"none",
+              textShadow:`0 0 80px ${GOLD}22`,filter:`drop-shadow(0 0 30px ${GOLD}33)`}}>UNO</div>
+            {/* italic subtitle */}
+            <div style={{fontFamily:"'Playfair Display',serif",fontStyle:"italic",fontWeight:700,
+              color:GOLD,opacity:0.45,fontSize:16,letterSpacing:6,marginTop:-4}}>
+              The Classic Card Game
+            </div>
+          </div>
+
+          {/* Rule of threes divider */}
+          <div style={{display:"flex",alignItems:"center",gap:14,margin:"32px 0",width:360}}>
+            <div style={{flex:1,height:1,background:`linear-gradient(to right,transparent,${GOLD}55)`}}/>
+            <svg width="20" height="20" viewBox="0 0 20 20">
+              <path d="M10,1 L11.5,7.5 L18,6 L13,11 L18,16 L11.5,14.5 L10,19 L8.5,14.5 L2,16 L7,11 L2,6 L8.5,7.5 Z"
+                fill="none" stroke={GOLD} strokeWidth="0.8" opacity="0.6"/>
+            </svg>
+            <div style={{flex:1,height:1,background:`linear-gradient(to left,transparent,${GOLD}55)`}}/>
           </div>
 
           {/* Player count */}
-          <div style={{ marginBottom: 32, textAlign: "center" }}>
-            <div style={{ fontSize: 13, color: "rgba(255,255,255,0.4)", letterSpacing: 3, marginBottom: 16, textTransform: "uppercase" }}>
-              Players
-            </div>
-            <div style={{ display: "flex", gap: 12 }}>
-              {[2, 3, 4].map((n) => (
-                <button key={n} onClick={() => setPlayerCount(n)} style={{
-                  width: 56, height: 56, borderRadius: 16,
-                  background: playerCount === n ? "linear-gradient(135deg, #BF5AF2, #0A84FF)" : "rgba(255,255,255,0.05)",
-                  border: playerCount === n ? "2px solid #BF5AF2" : "2px solid rgba(255,255,255,0.1)",
-                  color: "#fff", fontSize: 20, fontWeight: 900, cursor: "pointer",
-                  fontFamily: "'Exo 2', sans-serif",
-                  boxShadow: playerCount === n ? "0 0 24px rgba(191,90,242,0.5)" : "none",
-                  transition: "all 0.2s ease",
-                }}>
-                  {n}
-                </button>
+          <div style={{marginBottom:36,textAlign:"center"}}>
+            <div style={{fontFamily:"'DM Mono',monospace",color:GOLD,opacity:0.4,fontSize:10,
+              letterSpacing:5,marginBottom:14,textTransform:"uppercase"}}>Players at the table</div>
+            <div style={{display:"flex",gap:10,justifyContent:"center"}}>
+              {[2,3,4].map(n=>(
+                <button key={n} onClick={()=>setNumP(n)} style={{
+                  width:60,height:60,borderRadius:12,
+                  background:numP===n?`linear-gradient(145deg,${GOLD}cc,${GOLD}77)`:"rgba(201,168,76,0.07)",
+                  border:numP===n?`2px solid ${GOLD}`:`2px solid ${GOLD}2a`,
+                  color:numP===n?DARK:GOLD,fontSize:24,fontWeight:900,
+                  fontFamily:"'Playfair Display',serif",cursor:"pointer",
+                  boxShadow:numP===n?`0 0 24px ${GOLD}44,0 4px 12px #0006`:"none",
+                  transition:"all 0.2s"
+                }}>{n}</button>
               ))}
             </div>
           </div>
 
+          {/* CTA */}
           <button onClick={startGame} style={{
-            padding: "18px 64px", borderRadius: 50,
-            background: "linear-gradient(135deg, #FF2D55, #BF5AF2, #0A84FF)",
-            border: "none", color: "#fff", fontSize: 20, fontWeight: 900,
-            fontFamily: "'Exo 2', sans-serif", letterSpacing: 3, textTransform: "uppercase",
-            cursor: "pointer", boxShadow: "0 12px 40px rgba(191,90,242,0.5)",
-            transition: "all 0.2s ease",
+            padding:"17px 68px",borderRadius:50,
+            background:`linear-gradient(135deg,${GOLD} 0%,#7A5A10 100%)`,
+            border:"none",color:DARK,fontSize:14,fontWeight:700,letterSpacing:5,
+            textTransform:"uppercase",fontFamily:"'DM Mono',monospace",cursor:"pointer",
+            boxShadow:`0 10px 36px ${GOLD}44, inset 0 1px 0 rgba(255,255,255,0.25)`,
+            transition:"all 0.2s"
           }}
-            onMouseEnter={(e) => { e.target.style.transform = "scale(1.05)"; e.target.style.boxShadow = "0 16px 48px rgba(191,90,242,0.7)"; }}
-            onMouseLeave={(e) => { e.target.style.transform = "scale(1)"; e.target.style.boxShadow = "0 12px 40px rgba(191,90,242,0.5)"; }}
-          >
-            Play Now
+            onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-3px)";e.currentTarget.style.boxShadow=`0 18px 52px ${GOLD}66, inset 0 1px 0 rgba(255,255,255,0.25)`;}}
+            onMouseLeave={e=>{e.currentTarget.style.transform="none";e.currentTarget.style.boxShadow=`0 10px 36px ${GOLD}44, inset 0 1px 0 rgba(255,255,255,0.25)`;}}>
+            Deal the Cards
           </button>
 
-          {/* Rules */}
-          <div style={{ marginTop: 48, display: "flex", gap: 24, opacity: 0.4 }}>
-            {[["🃏", "Match color"], ["⇄", "Reverse flow"], ["⊘", "Skip turn"], ["+2", "Draw cards"], ["★", "Wild colors"]].map(([icon, label]) => (
-              <div key={label} style={{ textAlign: "center", fontSize: 12, color: "#fff", letterSpacing: 0.5 }}>
-                <div style={{ fontSize: 20, marginBottom: 4 }}>{icon}</div>
-                {label}
+          {/* Icon legend */}
+          <div style={{display:"flex",gap:32,marginTop:44,opacity:0.28}}>
+            {[["⊗","Skip"],["⇌","Reverse"],["+2","Draw 2"],["✦","Wild"],["+4","Wild +4"]].map(([ic,lb])=>(
+              <div key={lb} style={{textAlign:"center",color:CREAM,fontFamily:"'DM Mono',monospace",fontSize:10,letterSpacing:1}}>
+                <div style={{fontFamily:"'Playfair Display',serif",fontSize:22,marginBottom:5,color:GOLD}}>{ic}</div>
+                {lb}
               </div>
             ))}
           </div>
         </div>
-      </>
-    );
-  }
+      </div>
+    </>
+  );
 
-  return (
+  /* ── GAME TABLE ── */
+  const G=game;
+  const human=G?.players[HUMAN];
+  const top=G?.pile[G.pile.length-1];
+  const myTurn=G?.cur===HUMAN;
+  const acc=C[G?.curCol]||GOLD;
+
+  return(
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Exo+2:wght@400;600;700;800;900&display=swap');
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { background: #080812; overflow: hidden; }
-        @keyframes fadeIn { from{opacity:0} to{opacity:1} }
-        @keyframes toastIn { from{opacity:0;transform:translateY(-12px) scale(0.9)} to{opacity:1;transform:translateY(0) scale(1)} }
-        @keyframes popIn { from{opacity:0;transform:scale(0.7)} to{opacity:1;transform:scale(1)} }
-        @keyframes unoPulse { 0%,100%{box-shadow:0 0 8px #FFD60A} 50%{box-shadow:0 0 24px #FFD60A,0 0 48px #FFD60A88} }
-        @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
-        ::-webkit-scrollbar { height: 4px; background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900&family=DM+Mono:wght@400;500&display=swap');
+        *{box-sizing:border-box;margin:0;padding:0;}
+        body{background:${DARK};overflow:hidden;}
+        @keyframes toastUp{from{opacity:0;transform:translateY(10px) scale(0.95)}to{opacity:1;transform:none}}
+        @keyframes spinSlow{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+        @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.45}}
+        @keyframes glow{0%,100%{box-shadow:0 0 12px var(--ac)}50%{box-shadow:0 0 28px var(--ac), 0 0 48px var(--ac)55}}
+        @keyframes slideUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+        ::-webkit-scrollbar{height:3px;background:transparent}
+        ::-webkit-scrollbar-thumb{background:${GOLD}44;border-radius:2px}
       `}</style>
 
-      <Toast messages={toasts} />
-      {showColorPicker && (
-        <ColorPicker onSelect={(c) => {
-          setShowColorPicker(false);
-          playCard(pendingWild, c);
-          setPendingWild(null);
-        }} />
-      )}
-      {game?.gameOver && <GameOverScreen winner={game.winner} onRestart={startGame} />}
+      <Toasts list={toasts}/>
+      {colorModal&&<ColorModal onPick={c=>{setColorModal(false);doPlay(pendingIdx,c);setPendingIdx(null);}}/>}
+      {G?.over&&<WinScreen winner={G.winner} onReplay={startGame}/>}
 
-      <div style={{
-        width: "100vw", height: "100vh",
-        background: "radial-gradient(ellipse at 50% 0%, #1a0a2e 0%, #080812 60%)",
-        display: "flex", flexDirection: "column",
-        alignItems: "center", justifyContent: "space-between",
-        fontFamily: "'Exo 2', sans-serif",
-        padding: "16px 24px",
-        overflow: "hidden",
-        position: "relative",
-      }}>
-        {/* Background glow */}
-        <div style={{
-          position: "absolute", width: 600, height: 300, borderRadius: "50%",
-          background: `radial-gradient(ellipse, ${game?.currentColor ? COLOR_HEX[game.currentColor] : "#BF5AF2"}22 0%, transparent 70%)`,
-          top: "30%", left: "50%", transform: "translate(-50%,-50%)",
-          transition: "background 0.5s ease",
-          pointerEvents: "none",
-        }} />
+      <div style={{width:"100vw",height:"100vh",overflow:"hidden",position:"relative",
+        background:`radial-gradient(ellipse at 50% 50%, #0c3a1c 0%, #061610 55%, ${DARK} 100%)`}}>
 
-        {/* TOP: Opponents */}
-        <div style={{ display: "flex", gap: 12, alignItems: "flex-start", width: "100%", justifyContent: "center" }}>
-          {game?.players.slice(1).map((p) => (
-            <div key={p.id} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
-              <PlayerAvatar
-                player={p}
-                isActive={game.currentPlayer === p.id}
-                cardCount={p.hand.length}
-                isUno={p.hand.length === 1}
-              />
-              {/* Bot cards (face down) */}
-              <div style={{ display: "flex", gap: -8 }}>
-                {p.hand.slice(0, Math.min(p.hand.length, 8)).map((_, i) => (
-                  <UnoCard
-                    key={i}
-                    card={null}
-                    faceDown
-                    isSmall
-                    style={{ marginLeft: i > 0 ? -16 : 0, zIndex: i }}
-                  />
-                ))}
-                {p.hand.length > 8 && (
-                  <div style={{ width: 48, height: 72, display: "flex", alignItems: "center", justifyContent: "center", color: "rgba(255,255,255,0.3)", fontSize: 11, fontWeight: 700 }}>
-                    +{p.hand.length - 8}
+        {/* Felt diagonal texture */}
+        <div style={{position:"absolute",inset:0,pointerEvents:"none",opacity:0.055,
+          backgroundImage:`repeating-linear-gradient(-45deg,${GOLD} 0,${GOLD} 1px,transparent 0,transparent 50%)`,
+          backgroundSize:"10px 10px"}}/>
+
+        {/* Table oval */}
+        <div style={{position:"absolute",inset:"12px 20px",borderRadius:140,
+          border:`1.5px solid ${GOLD}1a`,
+          boxShadow:`inset 0 0 120px rgba(0,0,0,0.55), 0 0 60px rgba(0,0,0,0.6)`,
+          pointerEvents:"none"}}/>
+        <div style={{position:"absolute",inset:"22px 30px",borderRadius:130,
+          border:`0.5px solid ${GOLD}0d`,pointerEvents:"none"}}/>
+
+        {/* Dynamic color aura at center */}
+        <div style={{position:"absolute",top:"50%",left:"50%",
+          width:440,height:280,borderRadius:"50%",
+          background:`radial-gradient(ellipse, ${acc}0f 0%, transparent 70%)`,
+          transform:"translate(-50%,-50%)",transition:"background 0.7s ease",
+          pointerEvents:"none"}}/>
+
+        {/* TOP — opponents */}
+        <div style={{position:"absolute",top:16,left:0,right:0,
+          display:"flex",justifyContent:"center",gap:24,padding:"0 20px",zIndex:10}}>
+          {G?.players.slice(1).map(p=>(
+            <div key={p.id} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:6}}>
+              <Seat player={p} active={G.cur===p.id} uno={p.hand.length===1}/>
+              {/* Face-down fan */}
+              <div style={{position:"relative",height:48,width:Math.min(p.hand.length,10)*12+44}}>
+                {p.hand.slice(0,Math.min(p.hand.length,10)).map((_,i,arr)=>(
+                  <div key={i} style={{position:"absolute",
+                    left:i*12,
+                    top:Math.abs(i-arr.length/2)*0.5,
+                    transform:`rotate(${(i-arr.length/2)*2.8}deg)`,
+                    zIndex:i,transformOrigin:"bottom center"}}>
+                    <CardBack sm/>
                   </div>
-                )}
+                ))}
               </div>
+              {p.hand.length>10&&(
+                <div style={{fontFamily:"'DM Mono',monospace",fontSize:10,color:`${GOLD}66`}}>
+                  +{p.hand.length-10} more
+                </div>
+              )}
             </div>
           ))}
         </div>
 
-        {/* MIDDLE: Table */}
-        <div style={{
-          display: "flex", alignItems: "center", justifyContent: "center", gap: 48,
-          flex: 1, position: "relative",
-        }}>
-          {/* Direction & Color indicator */}
-          <div style={{
-            position: "absolute", top: -8, left: "50%", transform: "translateX(-50%)",
-            display: "flex", alignItems: "center", gap: 12,
-          }}>
-            <div style={{
-              padding: "4px 16px", borderRadius: 50,
-              background: `${COLOR_HEX[game?.currentColor] || "#BF5AF2"}33`,
-              border: `1px solid ${COLOR_HEX[game?.currentColor] || "#BF5AF2"}66`,
-              color: COLOR_HEX[game?.currentColor] || "#BF5AF2",
-              fontSize: 12, fontWeight: 800, letterSpacing: 2, textTransform: "uppercase",
-            }}>
-              {game?.currentColor} {game?.direction === 1 ? "→" : "←"}
+        {/* CENTER TABLE */}
+        <div style={{position:"absolute",top:"50%",left:"50%",
+          transform:"translate(-50%,-50%)",
+          display:"flex",alignItems:"center",gap:44,zIndex:10}}>
+
+          {/* Draw pile */}
+          <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:8}}>
+            <div style={{fontFamily:"'DM Mono',monospace",fontSize:9,color:GOLD,
+              opacity:0.3,letterSpacing:3,textTransform:"uppercase"}}>
+              {G?.deck.length} cards
             </div>
-            {game?.drawStack > 0 && (
-              <div style={{
-                padding: "4px 16px", borderRadius: 50,
-                background: "rgba(255,45,85,0.2)", border: "1px solid rgba(255,45,85,0.5)",
-                color: "#FF2D55", fontSize: 12, fontWeight: 800, letterSpacing: 1,
-              }}>
-                Stack: +{game.drawStack}
+            <div onClick={myTurn?handleDraw:undefined}
+              style={{cursor:myTurn?"pointer":"default",transition:"transform 0.2s",
+                transform:myTurn?"translateY(-5px)":"none",position:"relative"}}
+              onMouseEnter={e=>{if(myTurn){e.currentTarget.style.transform="translateY(-10px) scale(1.06)";}}}
+              onMouseLeave={e=>{e.currentTarget.style.transform=myTurn?"translateY(-5px)":"none";}}>
+              {/* Stack effect */}
+              <div style={{position:"absolute",top:3,left:2,zIndex:0,opacity:0.5}}><CardBack/></div>
+              <div style={{position:"absolute",top:1.5,left:1,zIndex:1,opacity:0.7}}><CardBack/></div>
+              <div style={{position:"relative",zIndex:2}}><CardBack/></div>
+              {myTurn&&(
+                <div style={{position:"absolute",inset:0,borderRadius:8,zIndex:3,
+                  border:`2px solid ${C.blue}99`,
+                  boxShadow:`0 0 18px ${C.blue}55`,animation:"pulse 1.4s ease infinite",
+                  "--ac":C.blue,pointerEvents:"none"}}/>
+              )}
+            </div>
+            {myTurn&&G?.stack>0&&(
+              <div style={{fontFamily:"'DM Mono',monospace",fontSize:10,color:C.red,letterSpacing:1,
+                fontWeight:600,animation:"pulse 1s infinite"}}>draw +{G.stack}</div>
+            )}
+            {myTurn&&G?.stack===0&&(
+              <div style={{fontFamily:"'DM Mono',monospace",fontSize:10,color:`${GOLD}66`,letterSpacing:1}}>
+                draw card
               </div>
             )}
           </div>
 
-          {/* Draw pile */}
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
-            <div
-              onClick={isMyTurn ? handleDraw : undefined}
-              style={{
-                cursor: isMyTurn ? "pointer" : "default",
-                transform: isMyTurn ? "scale(1.04)" : "scale(1)",
-                transition: "transform 0.2s ease",
-                position: "relative",
-              }}
-              onMouseEnter={(e) => { if(isMyTurn) e.currentTarget.style.transform = "scale(1.08)"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.transform = isMyTurn ? "scale(1.04)" : "scale(1)"; }}
-            >
-              <UnoCard card={null} faceDown />
-              {isMyTurn && (
-                <div style={{
-                  position: "absolute", inset: 0, borderRadius: 12,
-                  background: "rgba(10,132,255,0.12)",
-                  border: "2px solid rgba(10,132,255,0.4)",
-                  animation: "fadeIn 0.3s ease",
-                }} />
-              )}
+          {/* Info column */}
+          <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:10}}>
+            {/* Color indicator */}
+            <div style={{display:"flex",alignItems:"center",gap:8,padding:"7px 18px",borderRadius:50,
+              background:`${acc}18`,border:`1.5px solid ${acc}55`,
+              transition:"all 0.5s",boxShadow:`0 0 16px ${acc}22`}}>
+              <div style={{width:10,height:10,borderRadius:"50%",background:acc,
+                boxShadow:`0 0 8px ${acc}`}}/>
+              <div style={{fontFamily:"'DM Mono',monospace",fontSize:11,color:acc,
+                letterSpacing:2,textTransform:"uppercase",fontWeight:600}}>
+                {G?.curCol}
+              </div>
+              <div style={{color:acc,fontSize:13,opacity:0.7}}>{G?.dir===1?"↻":"↺"}</div>
             </div>
-            <div style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", letterSpacing: 1 }}>
-              {game?.deck.length} left
-            </div>
+            {G?.stack>0&&(
+              <div style={{padding:"5px 14px",borderRadius:50,
+                background:"rgba(192,57,43,0.2)",border:`1.5px solid ${C.red}55`,
+                fontFamily:"'DM Mono',monospace",fontSize:11,color:C.red,letterSpacing:1,fontWeight:600}}>
+                +{G.stack} pending
+              </div>
+            )}
+            {/* Score label */}
+            <div style={{fontFamily:"'Playfair Display',serif",fontStyle:"italic",
+              color:GOLD,opacity:0.2,fontSize:13,marginTop:4}}>discard pile</div>
           </div>
 
           {/* Discard pile */}
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
-            <div style={{ position: "relative", width: 72, height: 108 }}>
-              {/* Stack effect */}
-              {game?.discardPile.slice(-3).map((c, i, arr) => (
-                <div key={i} style={{
-                  position: "absolute", top: (i - arr.length + 1) * 3, left: (i - arr.length + 1) * 2,
-                  zIndex: i,
-                }}>
-                  <UnoCard card={c} />
+          <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:8}}>
+            <div style={{fontFamily:"'DM Mono',monospace",fontSize:9,color:GOLD,
+              opacity:0.3,letterSpacing:3,textTransform:"uppercase"}}>
+              top card
+            </div>
+            <div style={{position:"relative",width:68,height:102}}>
+              {G?.pile.slice(-4).map((c,i,arr)=>(
+                <div key={i} style={{position:"absolute",inset:0,
+                  transform:`rotate(${(i-arr.length+1)*5}deg) translate(${(i-arr.length+1)*2}px,0)`,
+                  zIndex:i,
+                  opacity:i<arr.length-1?0.7:1}}>
+                  <CardFace card={c} glow={i===arr.length-1} lift={i===arr.length-1}/>
                 </div>
               ))}
-            </div>
-            <div style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", letterSpacing: 1 }}>
-              Discard
             </div>
           </div>
         </div>
 
-        {/* BOTTOM: Human player */}
-        <div style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
-          {/* Player info */}
-          <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 4 }}>
+        {/* BOTTOM — human */}
+        <div style={{position:"absolute",bottom:0,left:0,right:0,zIndex:10,
+          display:"flex",flexDirection:"column",alignItems:"center",
+          padding:"10px 16px 18px",background:`linear-gradient(to top, ${DARK}ee 0%, transparent 100%)`}}>
+
+          {/* Status */}
+          <div style={{display:"flex",alignItems:"center",gap:14,marginBottom:10}}>
+            <Seat player={human} active={myTurn} uno={human?.hand.length===1}/>
             <div style={{
-              padding: "6px 20px", borderRadius: 50,
-              background: isMyTurn ? "rgba(48,209,88,0.15)" : "rgba(255,255,255,0.04)",
-              border: isMyTurn ? "1px solid rgba(48,209,88,0.5)" : "1px solid rgba(255,255,255,0.08)",
-              color: isMyTurn ? "#30D158" : "rgba(255,255,255,0.4)",
-              fontSize: 12, fontWeight: 800, letterSpacing: 2, textTransform: "uppercase",
-              transition: "all 0.3s ease",
+              padding:"9px 24px",borderRadius:50,
+              background:myTurn?`${C.green}15`:"rgba(0,0,0,0.4)",
+              border:myTurn?`1.5px solid ${C.green}66`:`1.5px solid ${GOLD}18`,
+              fontFamily:"'DM Mono',monospace",fontSize:12,fontWeight:600,letterSpacing:3,
+              color:myTurn?C.green:`${GOLD}33`,textTransform:"uppercase",
+              transition:"all 0.35s",
+              boxShadow:myTurn?`0 0 18px ${C.green}33`:"none"
             }}>
-              {isMyTurn ? "Your Turn ✦" : "Wait..."}
+              {myTurn?"Your Turn":"Waiting…"}
             </div>
-            <div style={{ fontSize: 12, color: "rgba(255,255,255,0.3)", fontWeight: 600 }}>
-              {humanHand.length} cards
-            </div>
+            {/* Back to menu */}
+            <button onClick={()=>{setScreen("menu");setGame(null);}} style={{
+              padding:"9px 18px",borderRadius:50,
+              background:"rgba(201,168,76,0.07)",border:`1px solid ${GOLD}2a`,
+              color:`${GOLD}88`,fontSize:11,fontFamily:"'DM Mono',monospace",letterSpacing:2,
+              cursor:"pointer",textTransform:"uppercase",transition:"all 0.2s"
+            }}
+              onMouseEnter={e=>{e.currentTarget.style.background=`rgba(201,168,76,0.14)`;e.currentTarget.style.color=GOLD;}}
+              onMouseLeave={e=>{e.currentTarget.style.background="rgba(201,168,76,0.07)";e.currentTarget.style.color=`${GOLD}88`;}}>
+              ← Menu
+            </button>
           </div>
 
           {/* Hand */}
-          <div style={{
-            display: "flex",
-            gap: 0,
-            overflowX: "auto",
-            maxWidth: "100%",
-            padding: "8px 12px 4px",
-            alignItems: "flex-end",
-          }}>
-            {humanHand.map((card, i) => {
-              const playable = isMyTurn && canPlay(card, topCard, game?.currentColor);
-              const isSelected = selectedCard === i;
-              return (
-                <div key={i} style={{ marginLeft: i > 0 ? -16 : 0, zIndex: isSelected ? 100 : i, position: "relative" }}>
-                  <UnoCard
-                    card={card}
-                    onClick={() => handleCardClick(i)}
-                    isPlayable={playable}
-                    selected={isSelected}
-                  />
+          <div style={{display:"flex",gap:0,overflowX:"auto",maxWidth:"100vw",
+            padding:"16px 28px 6px",alignItems:"flex-end",
+            scrollSnapType:"x mandatory"}}>
+            {human?.hand.map((card,i)=>{
+              const playable=myTurn&&canPlay(card,top,G.curCol);
+              const isSel=selIdx===i;
+              return(
+                <div key={i} onClick={()=>handleCardClick(i)}
+                  style={{
+                    marginLeft:i>0?-20:0,zIndex:isSel?999:human.hand.length-i,
+                    position:"relative",
+                    transform:isSel?"translateY(-26px) rotate(0deg)":
+                              playable?"translateY(-12px)":"translateY(0)",
+                    cursor:playable?"pointer":"default",
+                    transition:"transform 0.18s cubic-bezier(.34,1.56,.64,1)",
+                    scrollSnapAlign:"start",
+                    animation:`slideUp 0.3s ease ${Math.min(i*0.04,0.5)}s both`
+                  }}
+                  onMouseEnter={e=>{if(playable&&!isSel)e.currentTarget.style.transform="translateY(-22px) scale(1.04)";}}
+                  onMouseLeave={e=>{if(!isSel)e.currentTarget.style.transform=playable?"translateY(-12px)":"translateY(0)";}}>
+                  <CardFace card={card} glow={isSel} lift={playable} dim={myTurn&&!playable&&!isSel}/>
                 </div>
               );
             })}
