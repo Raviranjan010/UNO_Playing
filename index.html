@@ -255,618 +255,616 @@ html,body{width:100%;height:100%;overflow:hidden;background:#0a0500;font-family:
   min-width:60px;min-height:50px;
 }
 .fan-card{position:absolute;transform-origin:bottom center}
-/* ── OPPONENTS ZONE ── */
-#opponents-zone {
-  position: relative; z-index: 10; display: flex; justify-content: center;
-  gap: 20px; padding: 16px 20px 0; width: 100%;
-}
-.opponent-wrap { display: flex; flex-direction: column; align-items: center; gap: 7px; }
-.seat-badge {
-  display: flex; align-items: center; gap: 10px; padding: 7px 14px;
-  border-radius: 50px; border: 1.5px solid; transition: all .35s;
-}
-.seat-badge.inactive {
-  background: rgba(0,0,0,.35); border-color: rgba(201,168,76,.12);
-}
-.seat-avatar {
-  width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center;
-  justify-content: center; font-family: 'Playfair Display', serif; font-weight: 900;
-  color: #fff; font-size: 13px; flex-shrink: 0; transition: all .3s; border: 2px solid;
-}
-.seat-name { font-size: 10px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; }
-.seat-cards-count { font-family: 'Playfair Display', serif; font-weight: 700; font-size: 12px; }
-.seat-uno { font-size: 9px; color: var(--yellow); font-weight: 700; letter-spacing: 1px; margin-left: 4px; }
 
-.bot-hand { display: flex; position: relative; height: 46px; align-items: flex-end; }
-.bot-card {
-  position: absolute; transition: all .3s;
-}
+/* ═══════════════════════════════════════════
+   CENTER TABLE ELEMENTS
+═══════════════════════════════════════════ */
+.table-block{display:flex;flex-direction:column;align-items:center;gap:8px}
+.tbl-label{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:rgba(212,168,71,.3)}
 
-/* ── CENTER TABLE ── */
-#center-table {
-  position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
-  display: flex; align-items: center; gap: 40px; z-index: 10;
+/* Draw pile */
+.draw-stack{position:relative;width:var(--card-w);height:var(--card-h);cursor:pointer;transition:transform .2s}
+.draw-stack:hover{transform:translateY(-8px)}
+.draw-layer{position:absolute}
+.draw-layer.l2{top:3px;left:2px;opacity:.45}
+.draw-layer.l1{top:1.5px;left:1px;opacity:.7}
+.draw-layer.l0{top:0;left:0}
+.draw-active-ring{
+  position:absolute;inset:-3px;border-radius:14px;
+  border:2px solid var(--blue);
+  box-shadow:0 0 16px rgba(26,79,138,.6);
+  animation:ringPulse 1.4s ease infinite;display:none;
 }
-.pile-wrap { display: flex; flex-direction: column; align-items: center; gap: 7px; }
-.pile-label {
-  font-size: 9px; letter-spacing: 3px; text-transform: uppercase;
-  color: var(--gold); opacity: .3;
-}
-.draw-pile { position: relative; cursor: pointer; transition: transform .2s; }
-.draw-pile:hover { transform: translateY(-8px) scale(1.05); }
-.draw-pile-stack { position: relative; }
-.discard-pile { position: relative; width: var(--card-w); height: var(--card-h); }
-.discard-pile .card-pos {
-  position: absolute; inset: 0; transition: transform .3s;
-}
+.draw-active-ring.show{display:block}
+@keyframes ringPulse{0%,100%{opacity:1}50%{opacity:.3}}
 
-.info-col { display: flex; flex-direction: column; align-items: center; gap: 10px; }
-.color-pill {
-  display: flex; align-items: center; gap: 8px; padding: 7px 18px; border-radius: 50px;
-  border: 1.5px solid; transition: all .5s; font-size: 11px; letter-spacing: 2px;
-  text-transform: uppercase; font-weight: 600;
+/* Info panel */
+.info-panel{
+  display:flex;flex-direction:column;align-items:center;gap:10px;
+  min-width:120px;
 }
-.color-dot { width: 10px; height: 10px; border-radius: 50%; }
-.direction-icon { font-size: 14px; opacity: .7; }
-.stack-pill {
-  padding: 5px 14px; border-radius: 50px;
-  background: rgba(192,57,43,.2); border: 1.5px solid rgba(192,57,43,.55);
-  font-size: 11px; color: var(--red); letter-spacing: 1px; font-weight: 600;
-  display: none;
+.color-chip{
+  display:flex;align-items:center;gap:8px;
+  padding:8px 18px;border-radius:50px;border:1.5px solid;
+  transition:all .6s ease;font-size:11px;font-weight:600;
+  letter-spacing:2px;text-transform:uppercase;
 }
-.pile-sub { font-family: 'Playfair Display', serif; font-style: italic; color: var(--gold); opacity: .2; font-size: 12px; }
+.chip-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.chip-dir{font-size:15px;opacity:.75}
+.stack-tag{
+  padding:5px 14px;border-radius:50px;font-size:11px;font-weight:600;
+  letter-spacing:1px;background:rgba(192,57,43,.18);
+  border:1.5px solid rgba(192,57,43,.5);color:var(--red);
+  display:none;
+}
+.stack-tag.show{display:block}
+.deck-num{font-size:10px;font-weight:500;color:rgba(212,168,71,.35);letter-spacing:1px}
 
-/* ── BOTTOM ZONE ── */
-#bottom-zone {
-  position: relative; z-index: 10; display: flex; flex-direction: column;
-  align-items: center; width: 100%;
-  padding: 10px 16px 18px;
-  background: linear-gradient(to top, rgba(6,14,8,.96) 0%, transparent 100%);
-}
-.status-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; flex-wrap: wrap; justify-content: center; }
-.turn-badge {
-  padding: 9px 22px; border-radius: 50px; border: 1.5px solid; font-size: 12px;
-  font-weight: 600; letter-spacing: 3px; text-transform: uppercase; transition: all .35s;
-}
-.turn-badge.my-turn {
-  background: rgba(26,107,60,.15); border-color: rgba(26,107,60,.6);
-  color: var(--green); box-shadow: 0 0 18px rgba(26,107,60,.3);
-}
-.turn-badge.waiting {
-  background: rgba(0,0,0,.4); border-color: rgba(201,168,76,.15); color: rgba(201,168,76,.3);
-}
-.menu-btn {
-  padding: 9px 18px; border-radius: 50px; border: 1px solid rgba(201,168,76,.25);
-  background: rgba(201,168,76,.07); color: rgba(201,168,76,.7); font-size: 11px;
-  letter-spacing: 2px; cursor: pointer; text-transform: uppercase;
-  font-family: 'DM Mono', monospace; transition: all .2s;
-}
-.menu-btn:hover { background: rgba(201,168,76,.15); color: var(--gold); }
+/* Discard pile */
+.discard-stack{position:relative;width:var(--card-w);height:var(--card-h)}
+.discard-layer{position:absolute;inset:0}
 
-#hand-container {
-  display: flex; gap: 0; overflow-x: auto; max-width: 100vw;
-  padding: 18px 28px 6px; align-items: flex-end;
-  scrollbar-width: thin; scrollbar-color: rgba(201,168,76,.3) transparent;
+/* ═══════════════════════════════════════════
+   PLAYER ZONE (Bottom)
+═══════════════════════════════════════════ */
+.player-hud{
+  display:flex;align-items:center;justify-content:center;
+  gap:12px;flex-wrap:nowrap;width:100%;
 }
-#hand-container::-webkit-scrollbar { height: 3px; }
-#hand-container::-webkit-scrollbar-thumb { background: rgba(201,168,76,.3); border-radius: 2px; }
+.human-seat-wrap{flex-shrink:0}
+.turn-pill{
+  padding:10px 24px;border-radius:50px;border:1.5px solid;
+  font-size:12px;font-weight:700;letter-spacing:3px;text-transform:uppercase;
+  transition:all .35s;flex-shrink:0;white-space:nowrap;
+}
+.turn-pill.go{
+  background:rgba(26,107,60,.15);border-color:rgba(26,107,60,.55);
+  color:var(--green);box-shadow:0 0 18px rgba(26,107,60,.25);
+}
+.turn-pill.wait{
+  background:rgba(0,0,0,.35);border-color:rgba(212,168,71,.12);
+  color:rgba(212,168,71,.3);
+}
+.nav-btn{
+  padding:10px 18px;border-radius:50px;
+  border:1px solid rgba(212,168,71,.2);background:rgba(212,168,71,.06);
+  color:rgba(212,168,71,.6);font-size:11px;font-weight:600;
+  letter-spacing:2px;cursor:pointer;text-transform:uppercase;
+  font-family:'Raleway',sans-serif;transition:all .2s;flex-shrink:0;white-space:nowrap;
+}
+.nav-btn:hover{background:rgba(212,168,71,.14);color:var(--gold);border-color:rgba(212,168,71,.4)}
 
-.hand-card {
-  flex-shrink: 0; transition: transform .18s cubic-bezier(.34,1.56,.64,1);
-  cursor: default; position: relative;
+/* Hand scroll */
+#hand-wrap{
+  width:100%;overflow-x:auto;
+  padding:16px 32px 6px;
+  display:flex;align-items:flex-end;justify-content:center;
+  gap:0;
+  scrollbar-width:thin;scrollbar-color:rgba(212,168,71,.25) transparent;
 }
-.hand-card.playable { cursor: pointer; }
-.hand-card.playable:hover { transform: translateY(-20px) scale(1.04) !important; }
-
-/* ── CARDS ── */
-.card {
-  width: var(--card-w); height: var(--card-h); border-radius: 10px;
-  position: relative; user-select: none; display: block; flex-shrink: 0;
+#hand-wrap::-webkit-scrollbar{height:3px}
+#hand-wrap::-webkit-scrollbar-thumb{background:rgba(212,168,71,.25);border-radius:2px}
+.h-card{
+  flex-shrink:0;position:relative;transition:transform .2s cubic-bezier(.34,1.56,.64,1);
+  cursor:default;
 }
-.card-sm {
-  width: 44px; height: 66px; border-radius: 7px; display: block;
-}
-.card canvas { display: none; }
-
-/* ── COLOR PICKER MODAL ── */
-#color-modal {
-  position: fixed; inset: 0; z-index: 200; display: none;
-  align-items: center; justify-content: center;
-  background: rgba(4,12,6,.9); backdrop-filter: blur(16px);
-}
-#color-modal.show { display: flex; }
-.color-modal-box {
-  background: linear-gradient(160deg, #0a2214, #050d08);
-  border: 1.5px solid rgba(201,168,76,.4); border-radius: 22px;
-  padding: 44px 56px; text-align: center;
-  box-shadow: 0 0 0 1px rgba(201,168,76,.08), 0 40px 100px rgba(0,0,0,.75),
-              inset 0 1px 0 rgba(201,168,76,.15);
-}
-.modal-title {
-  font-family: 'Playfair Display', serif; color: var(--gold); font-size: 24px; font-weight: 700;
-  letter-spacing: 2px; margin-bottom: 6px;
-}
-.modal-sub { font-size: 10px; letter-spacing: 4px; text-transform: uppercase; color: var(--cream); opacity: .32; margin-bottom: 34px; }
-.color-choices { display: flex; gap: 18px; justify-content: center; }
-.color-choice {
-  width: 66px; height: 66px; border-radius: 14px; border: 2px solid rgba(201,168,76,.35);
-  cursor: pointer; transition: all .15s; outline: none;
-}
-.color-choice:hover { transform: scale(1.15) translateY(-4px); }
-
-/* ── WIN SCREEN ── */
-#win-screen {
-  position: fixed; inset: 0; z-index: 300; display: none;
-  align-items: center; justify-content: center; flex-direction: column; gap: 28px;
-  background: rgba(4,12,6,.97); backdrop-filter: blur(28px);
-}
-#win-screen.show { display: flex; }
-.win-ring {
-  width: 160px; height: 160px; border-radius: 50%; border: 2.5px solid var(--gold);
-  display: flex; align-items: center; justify-content: center;
-  animation: spinSlow 6s linear infinite;
-  box-shadow: 0 0 40px rgba(201,168,76,.4);
-  position: relative;
-}
-.win-ring-inner {
-  position: absolute; inset: 16px; border-radius: 50%;
-  border: 1px solid rgba(201,168,76,.35);
-}
-.win-star { font-family: 'Playfair Display', serif; font-size: 40px; color: var(--gold);
-  filter: drop-shadow(0 0 12px var(--gold)); text-shadow: 0 0 24px var(--gold); }
-.win-name {
-  font-family: 'Playfair Display', serif; font-weight: 900; font-size: clamp(36px,6vw,52px);
-  color: var(--gold); letter-spacing: 6px; text-transform: uppercase;
-  text-shadow: 0 0 60px rgba(201,168,76,.7), 0 4px 16px rgba(0,0,0,.8);
-  text-align: center;
-}
-.win-sub { font-size: 12px; letter-spacing: 6px; text-transform: uppercase; color: var(--cream); opacity: .3; }
-.replay-btn {
-  padding: 15px 52px; border-radius: 50px; border: none; cursor: pointer;
-  background: linear-gradient(135deg, var(--gold), #7A5A10);
-  color: var(--dark); font-size: 13px; font-weight: 700; letter-spacing: 4px;
-  text-transform: uppercase; font-family: 'DM Mono', monospace;
-  box-shadow: 0 8px 32px rgba(201,168,76,.5); transition: all .2s;
-}
-.replay-btn:hover { transform: translateY(-3px); box-shadow: 0 16px 48px rgba(201,168,76,.75); }
-
-/* ── TOAST ── */
-#toast-container {
-  position: fixed; bottom: 210px; left: 50%; transform: translateX(-50%);
-  z-index: 400; display: flex; flex-direction: column; gap: 6px;
-  align-items: center; pointer-events: none;
-}
-.toast-msg {
-  padding: 9px 26px; border-radius: 40px; border: 1px solid;
-  color: var(--cream); font-size: 12px; font-weight: 600; letter-spacing: 1px;
-  backdrop-filter: blur(12px); white-space: nowrap;
-  box-shadow: 0 6px 24px rgba(0,0,0,.55);
-  animation: toastUp .3s cubic-bezier(.34,1.56,.64,1);
+.h-card.playable{cursor:pointer}
+.h-card.playable:hover{transform:translateY(-22px) scale(1.05) !important}
+.h-card.selected{transform:translateY(-30px) scale(1.08) !important;z-index:999!important}
+.h-card-dim::after{
+  content:'';position:absolute;inset:0;border-radius:var(--radius);
+  background:rgba(0,0,0,.5);pointer-events:none;
 }
 
-/* ── DRAW PULSE ── */
-.draw-pulse { animation: drawPulse 1.4s ease infinite; }
-@keyframes drawPulse {
-  0%,100% { box-shadow: 0 0 0 0 rgba(21,79,138,.6); }
-  50%      { box-shadow: 0 0 0 6px rgba(21,79,138,0); }
+/* ═══════════════════════════════════════════
+   MODAL OVERLAYS
+═══════════════════════════════════════════ */
+.overlay{
+  position:fixed;inset:0;z-index:500;
+  display:none;align-items:center;justify-content:center;
+  background:rgba(2,6,3,.88);backdrop-filter:blur(18px);
 }
-.dim-card::after {
-  content: ''; position: absolute; inset: 0; border-radius: 10px;
-  background: rgba(0,0,0,.45); pointer-events: none;
-}
+.overlay.show{display:flex}
 
-/* ── ANIMATIONS ── */
-@keyframes fadeUp { from { opacity:0; transform:translateY(22px); } to { opacity:1; transform:none; } }
-@keyframes drift  { 0%,100%{transform:translateY(0) rotate(var(--r,0deg));} 50%{transform:translateY(-18px) rotate(var(--r2,4deg));} }
-@keyframes spinSlow { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
-@keyframes toastUp { from{opacity:0;transform:translateY(10px) scale(.95)} to{opacity:1;transform:none} }
-@keyframes cardSlide { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:none} }
-@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.45} }
+/* Color picker */
+.color-picker-box{
+  background:linear-gradient(160deg,#0c2010,#050c06);
+  border:1.5px solid rgba(212,168,71,.35);border-radius:24px;
+  padding:48px 56px;text-align:center;
+  box-shadow:0 0 0 1px rgba(212,168,71,.07),0 40px 100px rgba(0,0,0,.8),inset 0 1px 0 rgba(212,168,71,.12);
+  animation:popIn .3s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes popIn{from{opacity:0;transform:scale(.88)}to{opacity:1;transform:none}}
+.cp-title{font-family:'Cinzel',serif;font-size:22px;font-weight:700;color:var(--gold);letter-spacing:2px;margin-bottom:6px}
+.cp-sub{font-size:10px;letter-spacing:4px;text-transform:uppercase;color:var(--smoke);opacity:.3;margin-bottom:36px}
+.cp-colors{display:flex;gap:16px;justify-content:center}
+.cp-btn{
+  width:68px;height:68px;border-radius:14px;
+  border:2px solid rgba(212,168,71,.3);cursor:pointer;outline:none;
+  transition:all .15s cubic-bezier(.34,1.56,.64,1);
+  position:relative;overflow:hidden;
+}
+.cp-btn::after{content:'';position:absolute;inset:0;background:rgba(255,255,255,.1);border-radius:12px}
+.cp-btn:hover{transform:scale(1.18) translateY(-4px)}
+
+/* Win screen */
+.win-box{
+  display:flex;flex-direction:column;align-items:center;gap:24px;
+  animation:popIn .5s cubic-bezier(.34,1.56,.64,1);
+}
+.win-ring-outer{
+  width:170px;height:170px;border-radius:50%;
+  border:2.5px solid var(--gold);
+  display:flex;align-items:center;justify-content:center;
+  position:relative;
+  box-shadow:0 0 50px rgba(212,168,71,.3),inset 0 0 30px rgba(212,168,71,.05);
+  animation:spinSlow 7s linear infinite;
+}
+.win-ring-inner{
+  position:absolute;inset:14px;border-radius:50%;
+  border:1px solid rgba(212,168,71,.3);
+}
+.win-icon{
+  font-family:'Cinzel',serif;font-size:44px;color:var(--gold);
+  text-shadow:0 0 30px var(--gold),0 0 60px rgba(212,168,71,.4);
+}
+.win-name{
+  font-family:'Cinzel',serif;font-weight:900;
+  font-size:clamp(36px,7vw,56px);color:var(--gold);
+  letter-spacing:6px;text-transform:uppercase;text-align:center;
+  text-shadow:0 0 60px rgba(212,168,71,.6),0 4px 20px rgba(0,0,0,.8);
+}
+.win-label{font-size:11px;letter-spacing:6px;text-transform:uppercase;color:var(--smoke);opacity:.3}
+.win-btns{display:flex;gap:12px;margin-top:8px}
+.win-play-btn{
+  padding:15px 48px;border-radius:50px;border:none;cursor:pointer;
+  background:linear-gradient(135deg,var(--gold2),var(--gold3));
+  color:#1a0800;font-family:'Cinzel',serif;font-size:13px;font-weight:700;
+  letter-spacing:4px;text-transform:uppercase;
+  box-shadow:0 8px 28px rgba(212,168,71,.45);transition:all .2s;
+}
+.win-play-btn:hover{transform:translateY(-2px);box-shadow:0 14px 44px rgba(212,168,71,.65)}
+.win-menu-btn{
+  padding:15px 28px;border-radius:50px;cursor:pointer;
+  border:1.5px solid rgba(212,168,71,.3);background:transparent;
+  color:rgba(212,168,71,.7);font-family:'Cinzel',serif;font-size:12px;
+  font-weight:600;letter-spacing:3px;text-transform:uppercase;transition:all .2s;
+}
+.win-menu-btn:hover{background:rgba(212,168,71,.1);color:var(--gold);border-color:var(--gold)}
+
+/* ═══════════════════════════════════════════
+   TOAST
+═══════════════════════════════════════════ */
+#toasts{
+  position:fixed;top:20px;left:50%;transform:translateX(-50%);
+  z-index:600;display:flex;flex-direction:column;gap:6px;
+  align-items:center;pointer-events:none;width:max-content;max-width:90vw;
+}
+.toast{
+  padding:10px 24px;border-radius:50px;border:1px solid;
+  color:var(--cream);font-size:12px;font-weight:600;letter-spacing:.5px;
+  backdrop-filter:blur(14px);white-space:nowrap;
+  box-shadow:0 8px 28px rgba(0,0,0,.5);
+  animation:toastIn .3s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes toastIn{from{opacity:0;transform:translateY(-12px) scale(.9)}to{opacity:1;transform:none}}
+
+/* ═══════════════════════════════════════════
+   SHARED ANIMATIONS
+═══════════════════════════════════════════ */
+@keyframes spinSlow{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+@keyframes floatCard{0%,100%{transform:var(--ft,translateY(0) rotate(-10deg))}50%{transform:var(--fth,translateY(-16px) rotate(-6deg))}}
+@keyframes cardIn{from{opacity:0;transform:translateY(18px) scale(.92)}to{opacity:1;transform:none}}
+
+/* ═══════════════════════════════════════════
+   COLOR VARS FOR SEATS (JS injected)
+═══════════════════════════════════════════ */
 </style>
 </head>
 <body>
 
-<!-- ══════════════════════════════════ MENU ══════════════════════════════════ -->
+<!-- ═══════════ MENU ═══════════ -->
 <div id="menu" class="screen active">
-  <div class="table-ring"></div>
-  <div class="table-ring2"></div>
-  <div class="corner-ornament tl"><svg viewBox="0 0 90 90"><path d="M0,0 L45,0 Q45,45 0,45 Z" fill="none" stroke="#C9A84C" stroke-width="1.2"/><path d="M10,0 L45,0 Q45,35 10,0 Z" fill="none" stroke="#C9A84C" stroke-width=".6" opacity=".5"/><circle cx="6" cy="6" r="3" fill="#C9A84C" opacity=".7"/><circle cx="12" cy="12" r="1.5" fill="#C9A84C" opacity=".4"/></svg></div>
-  <div class="corner-ornament tr"><svg viewBox="0 0 90 90"><path d="M0,0 L45,0 Q45,45 0,45 Z" fill="none" stroke="#C9A84C" stroke-width="1.2"/><path d="M10,0 L45,0 Q45,35 10,0 Z" fill="none" stroke="#C9A84C" stroke-width=".6" opacity=".5"/><circle cx="6" cy="6" r="3" fill="#C9A84C" opacity=".7"/><circle cx="12" cy="12" r="1.5" fill="#C9A84C" opacity=".4"/></svg></div>
-  <div class="corner-ornament br"><svg viewBox="0 0 90 90"><path d="M0,0 L45,0 Q45,45 0,45 Z" fill="none" stroke="#C9A84C" stroke-width="1.2"/><circle cx="6" cy="6" r="3" fill="#C9A84C" opacity=".7"/></svg></div>
-  <div class="corner-ornament bl"><svg viewBox="0 0 90 90"><path d="M0,0 L45,0 Q45,45 0,45 Z" fill="none" stroke="#C9A84C" stroke-width="1.2"/><circle cx="6" cy="6" r="3" fill="#C9A84C" opacity=".7"/></svg></div>
+  <!-- Corner ornaments -->
+  <div class="menu-corner tl">
+    <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M0 0 L60 0 Q60 60 0 60 Z" stroke="#d4a847" stroke-width="1" opacity=".8"/>
+      <path d="M12 0 L60 0 Q60 48 12 0 Z" stroke="#d4a847" stroke-width=".6" opacity=".4"/>
+      <circle cx="7" cy="7" r="3.5" fill="#d4a847" opacity=".7"/>
+      <circle cx="16" cy="16" r="2" fill="#d4a847" opacity=".4"/>
+      <circle cx="26" cy="26" r="1" fill="#d4a847" opacity=".25"/>
+    </svg>
+  </div>
+  <div class="menu-corner tr">
+    <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M0 0 L60 0 Q60 60 0 60 Z" stroke="#d4a847" stroke-width="1" opacity=".8"/>
+      <path d="M12 0 L60 0 Q60 48 12 0 Z" stroke="#d4a847" stroke-width=".6" opacity=".4"/>
+      <circle cx="7" cy="7" r="3.5" fill="#d4a847" opacity=".7"/>
+      <circle cx="16" cy="16" r="2" fill="#d4a847" opacity=".4"/>
+    </svg>
+  </div>
+  <div class="menu-corner bl">
+    <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M0 0 L60 0 Q60 60 0 60 Z" stroke="#d4a847" stroke-width="1" opacity=".8"/>
+      <circle cx="7" cy="7" r="3.5" fill="#d4a847" opacity=".7"/>
+    </svg>
+  </div>
+  <div class="menu-corner br">
+    <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M0 0 L60 0 Q60 60 0 60 Z" stroke="#d4a847" stroke-width="1" opacity=".8"/>
+      <circle cx="7" cy="7" r="3.5" fill="#d4a847" opacity=".7"/>
+    </svg>
+  </div>
 
-  <!-- Floating bg cards (drawn by JS) -->
-  <div id="floating-cards"></div>
+  <div id="bg-cards-wrap"></div>
 
-  <div class="menu-content">
+  <div class="menu-box">
+    <div class="menu-eyebrow">Royal Card Game</div>
     <div class="menu-logo">UNO</div>
-    <div class="menu-tagline">The Classic Card Game</div>
-    <div class="divider">
-      <div class="divider-line l"></div>
-      <div class="divider-star">✦</div>
-      <div class="divider-line r"></div>
+    <div class="menu-sub">Classic · Strategy · Fun</div>
+    <div class="orn-divider">
+      <div class="orn-line l"></div>
+      <div class="orn-diamond"></div>
+      <div class="orn-line r"></div>
     </div>
-    <div class="section-label">Players at the table</div>
-    <div class="player-btns">
-      <button class="player-btn" data-n="2">2</button>
-      <button class="player-btn active" data-n="3">3</button>
-      <button class="player-btn" data-n="4">4</button>
+    <div class="section-label">Number of Players</div>
+    <div class="player-picker">
+      <button class="p-btn" data-n="2">2</button>
+      <button class="p-btn sel" data-n="3">3</button>
+      <button class="p-btn" data-n="4">4</button>
     </div>
-    <button class="deal-btn" id="deal-btn">Deal the Cards</button>
+    <button class="deal-btn" id="deal-btn">✦ &nbsp;Deal the Cards</button>
     <div class="legend">
-      <div class="legend-item"><div class="legend-icon">⊗</div>Skip</div>
-      <div class="legend-item"><div class="legend-icon">⇌</div>Reverse</div>
-      <div class="legend-item"><div class="legend-icon">+2</div>Draw Two</div>
-      <div class="legend-item"><div class="legend-icon">✦</div>Wild</div>
-      <div class="legend-item"><div class="legend-icon">+4</div>Wild +4</div>
+      <div class="legend-item"><div class="legend-sym">⊗</div>Skip</div>
+      <div class="legend-item"><div class="legend-sym">⇌</div>Reverse</div>
+      <div class="legend-item"><div class="legend-sym">+2</div>Draw Two</div>
+      <div class="legend-item"><div class="legend-sym">✦</div>Wild</div>
+      <div class="legend-item"><div class="legend-sym">+4</div>Wild +4</div>
     </div>
   </div>
 </div>
 
-<!-- ══════════════════════════════════ GAME ══════════════════════════════════ -->
+<!-- ═══════════ GAME ═══════════ -->
 <div id="game" class="screen">
-  <div class="game-table-ring"></div>
-  <div class="game-table-ring2"></div>
-  <div class="color-aura" id="color-aura"></div>
+  <div id="aura"></div>
 
-  <div id="opponents-zone"></div>
+  <!-- ROW 1: Opponents -->
+  <div id="row-opponents"></div>
 
-  <div id="center-table">
-    <!-- Draw pile -->
-    <div class="pile-wrap">
-      <div class="pile-label" id="deck-count">52 cards</div>
-      <div class="draw-pile" id="draw-pile" title="Draw a card">
-        <div class="draw-pile-stack">
-          <div style="position:absolute;top:3px;left:2px;opacity:.45" id="back-a"></div>
-          <div style="position:absolute;top:1.5px;left:1px;opacity:.7" id="back-b"></div>
-          <div style="position:relative;z-index:2" id="back-c"></div>
-        </div>
+  <!-- ROW 2: Center Table -->
+  <div id="row-table">
+    <!-- Draw Pile -->
+    <div class="table-block">
+      <div class="tbl-label" id="deck-lbl">— cards</div>
+      <div class="draw-stack" id="draw-stack">
+        <div class="draw-layer l2" id="dl2"></div>
+        <div class="draw-layer l1" id="dl1"></div>
+        <div class="draw-layer l0" id="dl0"></div>
+        <div class="draw-active-ring" id="draw-ring"></div>
       </div>
-      <div id="draw-hint" style="font-size:10px;letter-spacing:1px;color:rgba(201,168,76,.45);opacity:0;transition:opacity .3s">draw card</div>
+      <div class="tbl-label" id="draw-hint-lbl" style="color:rgba(26,79,138,.7);opacity:0;transition:opacity .3s">tap to draw</div>
     </div>
 
-    <!-- Info col -->
-    <div class="info-col">
-      <div class="color-pill" id="color-pill">
-        <div class="color-dot" id="color-dot"></div>
-        <span id="color-label">red</span>
-        <span class="direction-icon" id="dir-icon">↻</span>
+    <!-- Info Panel -->
+    <div class="info-panel">
+      <div class="color-chip" id="color-chip">
+        <div class="chip-dot" id="chip-dot"></div>
+        <span id="chip-color">red</span>
+        <span class="chip-dir" id="chip-dir">↻</span>
       </div>
-      <div class="stack-pill" id="stack-pill">+0 pending</div>
-      <div class="pile-sub">discard pile</div>
+      <div class="stack-tag" id="stack-tag">+0</div>
+      <div class="deck-num" id="pile-count">0 discarded</div>
     </div>
 
-    <!-- Discard pile -->
-    <div class="pile-wrap">
-      <div class="pile-label">top card</div>
-      <div class="discard-pile" id="discard-pile"></div>
+    <!-- Discard Pile -->
+    <div class="table-block">
+      <div class="tbl-label">Discard</div>
+      <div class="discard-stack" id="discard-stack"></div>
     </div>
   </div>
 
-  <div id="bottom-zone">
-    <div class="status-bar">
-      <div id="human-seat"></div>
-      <div class="turn-badge waiting" id="turn-badge">Waiting…</div>
-      <button class="menu-btn" id="back-menu-btn">← Menu</button>
+  <!-- ROW 3: Player Zone -->
+  <div id="row-player">
+    <div class="player-hud">
+      <div class="human-seat-wrap" id="human-seat-wrap"></div>
+      <div class="turn-pill wait" id="turn-pill">Waiting…</div>
+      <button class="nav-btn" id="menu-btn">← Menu</button>
     </div>
-    <div id="hand-container"></div>
+    <div id="hand-wrap"></div>
   </div>
 </div>
 
-<!-- ══════════════════════════════════ MODALS ══════════════════════════════════ -->
-<div id="color-modal">
-  <div class="color-modal-box">
-    <div class="modal-title">Choose a Color</div>
-    <div class="modal-sub">Select active color</div>
-    <div class="color-choices">
-      <button class="color-choice" data-c="red"    style="background:#C0392B;box-shadow:0 4px 16px rgba(192,57,43,.5)"></button>
-      <button class="color-choice" data-c="yellow" style="background:#C9920A;box-shadow:0 4px 16px rgba(201,146,10,.5)"></button>
-      <button class="color-choice" data-c="green"  style="background:#1A6B3C;box-shadow:0 4px 16px rgba(26,107,60,.5)"></button>
-      <button class="color-choice" data-c="blue"   style="background:#154F8A;box-shadow:0 4px 16px rgba(21,79,138,.5)"></button>
+<!-- ═══════════ COLOR MODAL ═══════════ -->
+<div class="overlay" id="color-overlay">
+  <div class="color-picker-box">
+    <div class="cp-title">Choose a Color</div>
+    <div class="cp-sub">Pick the active suit</div>
+    <div class="cp-colors">
+      <button class="cp-btn" data-c="red"    style="background:#c0392b"></button>
+      <button class="cp-btn" data-c="yellow" style="background:#c9920a"></button>
+      <button class="cp-btn" data-c="green"  style="background:#1a6b3c"></button>
+      <button class="cp-btn" data-c="blue"   style="background:#1a4f8a"></button>
     </div>
   </div>
 </div>
 
-<div id="win-screen">
-  <div class="win-ring">
-    <div class="win-ring-inner"></div>
-    <div class="win-star">✦</div>
+<!-- ═══════════ WIN SCREEN ═══════════ -->
+<div class="overlay" id="win-overlay">
+  <div class="win-box">
+    <div class="win-ring-outer">
+      <div class="win-ring-inner"></div>
+      <div class="win-icon">✦</div>
+    </div>
+    <div>
+      <div class="win-name" id="win-name-el">Player</div>
+      <div class="win-label" style="text-align:center;margin-top:6px">wins the round</div>
+    </div>
+    <div class="win-btns">
+      <button class="win-play-btn" id="win-play-btn">Play Again</button>
+      <button class="win-menu-btn" id="win-menu-btn">Menu</button>
+    </div>
   </div>
-  <div>
-    <div class="win-name" id="win-name">You</div>
-    <div class="win-sub">wins the round</div>
-  </div>
-  <button class="replay-btn" id="replay-btn">New Round</button>
 </div>
 
-<div id="toast-container"></div>
+<!-- ═══════════ TOASTS ═══════════ -->
+<div id="toasts"></div>
 
 <script>
-/* ══════════════════════════════════════════════════════════════
-   CARD RENDERING — pure SVG strings
-══════════════════════════════════════════════════════════════ */
-const COL_HEX = { red:'#C0392B', yellow:'#C9920A', green:'#1A6B3C', blue:'#154F8A', wild:'#6A1E9A' };
-const LBL = { Skip:'⊗', Rev:'⇌', '+2':'+2', Wild:'✦', 'W+4':'+4' };
-const WILD_GRAD = `<linearGradient id="wg" x1="0%" y1="0%" x2="100%" y2="100%">
-  <stop offset="0%"   stop-color="#C0392B"/>
-  <stop offset="33%"  stop-color="#C9920A"/>
-  <stop offset="66%"  stop-color="#1A6B3C"/>
-  <stop offset="100%" stop-color="#154F8A"/>
+/* ═══════════════════════════════════════════
+   CONSTANTS
+═══════════════════════════════════════════ */
+const CHEX = { red:'#c0392b', yellow:'#c9920a', green:'#1a6b3c', blue:'#1a4f8a', wild:'#7b2fbe' };
+const ACCENT = ['#c0392b','#1a4f8a','#1a6b3c','#c9920a','#7b2fbe'];
+const LABELS = { Skip:'⊗', Rev:'⇌', '+2':'+2', Wild:'✦', 'W+4':'+4' };
+const COLORS = ['red','yellow','green','blue'];
+let numPlayers = 3;
+let G = null, selectedIdx = null, botTimer = null, toastId = 0;
+
+/* ═══════════════════════════════════════════
+   SVG CARD RENDERER
+═══════════════════════════════════════════ */
+const WG = `<linearGradient id="wg" x1="0%" y1="0%" x2="100%" y2="100%">
+  <stop offset="0%" stop-color="#c0392b"/>
+  <stop offset="33%" stop-color="#c9920a"/>
+  <stop offset="66%" stop-color="#1a6b3c"/>
+  <stop offset="100%" stop-color="#1a4f8a"/>
 </linearGradient>`;
 
-function cardSVG(card, w=72, h=108, opts={}) {
-  const { glow=false, lift=false, sm=false } = opts;
-  if(sm){ w=44; h=66; }
-  const isWild = card.kind==='wild';
-  const base   = COL_HEX[card.col] || COL_HEX.wild;
-  const lbl    = LBL[card.val] ?? card.val;
-  const dark   = card.col==='blue'||card.col==='wild'||card.col==='green';
-  const txtCol = dark ? '#FDF0D5' : card.col==='yellow' ? '#2a1800' : '#FDF0D5';
-  const fs     = sm ? (lbl.length>2?13:17) : (lbl.length>2?20:26);
-  const id     = `${card.col}-${card.val}`.replace(/[^a-z0-9-]/g,'_');
-  const rx=sm?7:10, cw=sm?44:72, ch=sm?66:108;
-  const cx=cw/2, cy=ch/2;
-  const ex=sm?14:22, ey=sm?21:34;
+function cardSVG(card, opts={}) {
+  const sm = opts.sm || false;
+  const glow = opts.glow || false;
+  const lift = opts.lift || false;
+  const cw = sm ? 48 : 76;
+  const ch = sm ? 72 : 114;
+  const rx = sm ? 7 : 11;
+  const isWild = card.kind === 'wild';
+  const base = CHEX[card.col] || CHEX.wild;
+  const lbl = LABELS[card.val] ?? card.val;
+  const darkBg = card.col==='blue'||card.col==='wild'||card.col==='green';
+  const txtC = darkBg ? '#f5e6c8' : card.col==='yellow' ? '#2a1500' : '#f5e6c8';
+  const cx = cw/2, cy = ch/2;
+  const ovalRx = sm ? 13 : 21, ovalRy = sm ? 20 : 33;
+  const fsMid = sm ? (lbl.length>2?12:16) : (lbl.length>2?19:25);
+  const fsCorner = sm ? 8 : 10;
+  const uid = (card.col+card.val).replace(/[^a-z0-9]/gi,'_')+Date.now()%1000;
 
-  let filter='';
-  if(glow) filter=`filter:drop-shadow(0 0 10px ${base}) drop-shadow(0 0 24px ${base}88) drop-shadow(0 4px 12px rgba(0,0,0,.6))`;
-  else if(lift) filter=`filter:drop-shadow(0 8px 20px ${base}66) drop-shadow(0 3px 8px rgba(0,0,0,.65))`;
-  else filter=`filter:drop-shadow(0 3px 7px rgba(0,0,0,.6))`;
+  let flt = 'filter:';
+  if (glow)     flt += `drop-shadow(0 0 10px ${base}) drop-shadow(0 0 22px ${base}99) drop-shadow(0 5px 14px rgba(0,0,0,.65))`;
+  else if (lift) flt += `drop-shadow(0 9px 22px ${base}66) drop-shadow(0 3px 9px rgba(0,0,0,.7))`;
+  else           flt += `drop-shadow(0 4px 9px rgba(0,0,0,.65))`;
 
-  return `<svg width="${cw}" height="${ch}" viewBox="0 0 ${cw} ${ch}" style="display:block;flex-shrink:0;${filter}">
-    <defs>
-      <linearGradient id="bg-${id}" x1="20%" y1="0%" x2="80%" y2="100%">
-        <stop offset="0%"  stop-color="${isWild?'#7B3FBE':base}" stop-opacity="1"/>
-        <stop offset="100%" stop-color="${isWild?'#2E1060':base}" stop-opacity="0.72"/>
-      </linearGradient>
-      <radialGradient id="sh-${id}" cx="30%" cy="30%" r="70%">
-        <stop offset="0%"   stop-color="rgba(255,255,255,0.2)"/>
-        <stop offset="100%" stop-color="rgba(0,0,0,0)"/>
-      </radialGradient>
-      ${isWild?WILD_GRAD:''}
-    </defs>
-    <rect x="2" y="2" width="${cw-4}" height="${ch-4}" rx="${rx}" fill="url(#bg-${id})"/>
-    <rect x="2" y="2" width="${cw-4}" height="${ch-4}" rx="${rx}" fill="url(#sh-${id})"/>
-    <rect x="2" y="2" width="${cw-4}" height="${ch-4}" rx="${rx}" fill="none" stroke="#C9A84C" stroke-width="1.6" stroke-opacity=".62"/>
-    <rect x="${sm?5:6}" y="${sm?5:6}" width="${cw-(sm?10:12)}" height="${ch-(sm?10:12)}" rx="${rx-2}" fill="none" stroke="#C9A84C" stroke-width=".5" stroke-opacity=".25"/>
-    <ellipse cx="${cx}" cy="${cy}" rx="${ex}" ry="${ey}" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
-    ${isWild?`<ellipse cx="${cx}" cy="${cy}" rx="${ex-6}" ry="${ey-8}" fill="url(#wg)" opacity=".9"/>`:''}
-    <text x="${cx}" y="${cy+2}" text-anchor="middle" dominant-baseline="middle"
-      font-family="'Playfair Display','Georgia',serif" font-weight="900" font-size="${fs}"
-      fill="${txtCol}" stroke="rgba(0,0,0,0.3)" stroke-width="0.5">${lbl}</text>
-    <text x="${sm?6:8}" y="${sm?14:18}" font-family="'Playfair Display',serif" font-weight="700"
-      font-size="${sm?9:11}" fill="${txtCol}" opacity=".9">${lbl}</text>
-    <g transform="rotate(180,${cw-8},${ch-14})">
-      <text x="${cw-8}" y="${ch-14}" text-anchor="middle" dominant-baseline="middle"
-        font-family="'Playfair Display',serif" font-weight="700"
-        font-size="${sm?9:11}" fill="${txtCol}" opacity=".9">${lbl}</text>
-    </g>
-    <line x1="${sm?6:8}" y1="${sm?10:12}" x2="${cw-(sm?6:8)}" y2="${sm?10:12}" stroke="rgba(255,255,255,0.13)" stroke-width=".8"/>
-    <line x1="${sm?6:8}" y1="${ch-(sm?8:10)}" x2="${cw-(sm?6:8)}" y2="${ch-(sm?8:10)}" stroke="rgba(255,255,255,0.07)" stroke-width=".8"/>
-  </svg>`;
+  return `<svg width="${cw}" height="${ch}" viewBox="0 0 ${cw} ${ch}" style="display:block;${flt}">
+  <defs>
+    <linearGradient id="bg${uid}" x1="15%" y1="0%" x2="85%" y2="100%">
+      <stop offset="0%" stop-color="${isWild?'#8b3fcc':base}" stop-opacity="1"/>
+      <stop offset="100%" stop-color="${isWild?'#2d1060':base}" stop-opacity="0.7"/>
+    </linearGradient>
+    <radialGradient id="sh${uid}" cx="28%" cy="28%" r="72%">
+      <stop offset="0%" stop-color="rgba(255,255,255,.22)"/>
+      <stop offset="100%" stop-color="rgba(0,0,0,0)"/>
+    </radialGradient>
+    ${isWild ? WG : ''}
+  </defs>
+  <rect x="2" y="2" width="${cw-4}" height="${ch-4}" rx="${rx}" fill="url(#bg${uid})"/>
+  <rect x="2" y="2" width="${cw-4}" height="${ch-4}" rx="${rx}" fill="url(#sh${uid})"/>
+  <!-- Gold border -->
+  <rect x="2" y="2" width="${cw-4}" height="${ch-4}" rx="${rx}" fill="none" stroke="#d4a847" stroke-width="1.6" stroke-opacity=".65"/>
+  <!-- Inner border -->
+  <rect x="${sm?5:6}" y="${sm?5:6}" width="${cw-(sm?10:12)}" height="${ch-(sm?10:12)}" rx="${rx-2}" fill="none" stroke="#d4a847" stroke-width=".5" stroke-opacity=".22"/>
+  <!-- Oval shape -->
+  <ellipse cx="${cx}" cy="${cy}" rx="${ovalRx}" ry="${ovalRy}" fill="rgba(255,255,255,.09)" stroke="rgba(255,255,255,.18)" stroke-width="1"/>
+  ${isWild ? `<ellipse cx="${cx}" cy="${cy}" rx="${ovalRx-5}" ry="${ovalRy-9}" fill="url(#wg)" opacity=".88"/>` : ''}
+  <!-- Center label -->
+  <text x="${cx}" y="${cy+1}" text-anchor="middle" dominant-baseline="middle"
+    font-family="'Cinzel','Georgia',serif" font-weight="900" font-size="${fsMid}"
+    fill="${txtC}" stroke="rgba(0,0,0,.3)" stroke-width=".5">${lbl}</text>
+  <!-- TL corner -->
+  <text x="${sm?6:8}" y="${sm?14:17}" font-family="'Cinzel',serif" font-weight="700"
+    font-size="${fsCorner}" fill="${txtC}" opacity=".88">${lbl}</text>
+  <!-- BR corner rotated -->
+  <g transform="rotate(180,${cw-(sm?6:8)},${ch-(sm?10:13)})">
+    <text x="${cw-(sm?6:8)}" y="${ch-(sm?10:13)}" text-anchor="middle" dominant-baseline="middle"
+      font-family="'Cinzel',serif" font-weight="700"
+      font-size="${fsCorner}" fill="${txtC}" opacity=".88">${lbl}</text>
+  </g>
+  <!-- Shimmer lines -->
+  <line x1="${sm?6:8}" y1="${sm?10:13}" x2="${cw-(sm?6:8)}" y2="${sm?10:13}" stroke="rgba(255,255,255,.14)" stroke-width=".7"/>
+  <line x1="${sm?6:8}" y1="${ch-(sm?8:11)}" x2="${cw-(sm?6:8)}" y2="${ch-(sm?8:11)}" stroke="rgba(255,255,255,.06)" stroke-width=".7"/>
+</svg>`;
 }
 
-function backSVG(w=72, h=108, sm=false) {
-  if(sm){ w=44; h=66; }
-  const cw=w, ch=h, rx=sm?7:10;
-  return `<svg width="${cw}" height="${ch}" viewBox="0 0 ${cw} ${ch}" style="display:block;flex-shrink:0;filter:drop-shadow(0 3px 8px rgba(0,0,0,.7))">
-    <defs>
-      <pattern id="bp" patternUnits="userSpaceOnUse" width="10" height="10" patternTransform="rotate(45)">
-        <line x1="0" y1="0" x2="0" y2="10" stroke="#C9A84C" stroke-width=".7" stroke-opacity=".25"/>
-      </pattern>
-    </defs>
-    <rect x="2" y="2" width="${cw-4}" height="${ch-4}" rx="${rx}" fill="#120820"/>
-    <rect x="2" y="2" width="${cw-4}" height="${ch-4}" rx="${rx}" fill="url(#bp)"/>
-    <rect x="2" y="2" width="${cw-4}" height="${ch-4}" rx="${rx}" fill="none" stroke="#C9A84C" stroke-width="1.6" stroke-opacity=".5"/>
-    <rect x="${sm?5:6}" y="${sm?5:6}" width="${cw-(sm?10:12)}" height="${ch-(sm?10:12)}" rx="${rx-2}" fill="none" stroke="#C9A84C" stroke-width=".5" stroke-opacity=".22"/>
-    <ellipse cx="${cw/2}" cy="${ch/2}" rx="${sm?12:18}" ry="${sm?19:28}" fill="none" stroke="#C9A84C" stroke-width=".8" stroke-opacity=".38"/>
-    <text x="${cw/2}" y="${ch/2+2}" text-anchor="middle" dominant-baseline="middle"
-      font-family="'Playfair Display',serif" font-weight="900" font-size="${sm?9:14}"
-      fill="#C9A84C" opacity=".72">UNO</text>
-  </svg>`;
+function backSVG(sm=false) {
+  const cw = sm ? 48 : 76, ch = sm ? 72 : 114, rx = sm ? 7 : 11;
+  const uid = 'bk'+Math.random().toString(36).slice(2,6);
+  return `<svg width="${cw}" height="${ch}" viewBox="0 0 ${cw} ${ch}" style="display:block;filter:drop-shadow(0 4px 9px rgba(0,0,0,.7))">
+  <defs>
+    <pattern id="p${uid}" patternUnits="userSpaceOnUse" width="${sm?8:10}" height="${sm?8:10}" patternTransform="rotate(45)">
+      <line x1="0" y1="0" x2="0" y2="${sm?8:10}" stroke="#d4a847" stroke-width=".7" stroke-opacity=".22"/>
+    </pattern>
+  </defs>
+  <rect x="2" y="2" width="${cw-4}" height="${ch-4}" rx="${rx}" fill="#100618"/>
+  <rect x="2" y="2" width="${cw-4}" height="${ch-4}" rx="${rx}" fill="url(#p${uid})"/>
+  <rect x="2" y="2" width="${cw-4}" height="${ch-4}" rx="${rx}" fill="none" stroke="#d4a847" stroke-width="1.6" stroke-opacity=".5"/>
+  <rect x="${sm?5:6}" y="${sm?5:6}" width="${cw-(sm?10:12)}" height="${ch-(sm?10:12)}" rx="${rx-2}" fill="none" stroke="#d4a847" stroke-width=".5" stroke-opacity=".2"/>
+  <ellipse cx="${cw/2}" cy="${ch/2}" rx="${sm?12:18}" ry="${sm?18:27}" fill="none" stroke="#d4a847" stroke-width=".8" stroke-opacity=".35"/>
+  <text x="${cw/2}" y="${ch/2+1}" text-anchor="middle" dominant-baseline="middle"
+    font-family="'Cinzel',serif" font-weight="900" font-size="${sm?9:13}"
+    fill="#d4a847" opacity=".68">UNO</text>
+</svg>`;
 }
 
-/* ══════════════════════════════════════════════════════════════
-   GAME LOGIC
-══════════════════════════════════════════════════════════════ */
-const COLORS = ['red','yellow','green','blue'];
-
+/* ═══════════════════════════════════════════
+   DECK & GAME INIT
+═══════════════════════════════════════════ */
 function makeDeck() {
-  const d = [];
+  const d=[];
   COLORS.forEach(col => {
     d.push({col,val:'0',kind:'num'});
-    for(let n=1;n<=9;n++){
-      d.push({col,val:`${n}`,kind:'num'});
-      d.push({col,val:`${n}`,kind:'num'});
-    }
-    ['Skip','Rev','+2'].forEach(v => {
-      d.push({col,val:v,kind:'act'});
-      d.push({col,val:v,kind:'act'});
-    });
+    for(let n=1;n<=9;n++){d.push({col,val:`${n}`,kind:'num'});d.push({col,val:`${n}`,kind:'num'});}
+    ['Skip','Rev','+2'].forEach(v=>{d.push({col,val:v,kind:'act'});d.push({col,val:v,kind:'act'});});
   });
-  ['Wild','W+4','Wild','W+4'].forEach(v => d.push({col:'wild',val:v,kind:'wild'}));
+  ['Wild','W+4','Wild','W+4'].forEach(v=>d.push({col:'wild',val:v,kind:'wild'}));
   return d;
 }
 function shuffle(a) {
-  const b=[...a];
-  for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];}
-  return b;
+  const b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];}return b;
 }
-function canPlay(card, top, curCol) {
+function canPlay(card,top,curCol){
   if(card.kind==='wild') return true;
-  if(card.col===curCol) return true;
+  if(card.col===curCol)  return true;
   if(card.val===top.val) return true;
   return false;
 }
-
-let G = null; // game state
-let botTimer = null;
-let selectedIdx = null;
-let numPlayers = 3;
-
-function initGame() {
-  let deck = shuffle(makeDeck());
-  const players = Array.from({length:numPlayers},(_,i)=>({
-    id:i, name:i===0?'You':`Player ${i+1}`, hand:[], isHuman:i===0
-  }));
+function startGame() {
+  clearTimeout(botTimer);
+  selectedIdx=null;
+  let deck=shuffle(makeDeck());
+  const players=Array.from({length:numPlayers},(_,i)=>({id:i,name:i===0?'You':`Player ${i+1}`,hand:[]}));
   for(let i=0;i<7;i++) players.forEach(p=>p.hand.push(deck.pop()));
   let top;
-  do{ top=deck.pop(); if(top.kind==='wild') deck.unshift(top); }while(top.kind==='wild');
-  G = { deck, pile:[top], players, cur:0, dir:1, curCol:top.col, over:false, winner:null, stack:0 };
+  do{top=deck.pop();if(top.kind==='wild')deck.unshift(top);}while(top.kind==='wild');
+  G={deck,pile:[top],players,cur:0,dir:1,curCol:top.col,over:false,winner:null,stack:0};
+  closeOverlays();
+  showScreen('game');
+  renderGame();
+  toast('Cards dealt — good luck!','#d4a847');
 }
 
-/* ══════════════════════════════════════════════════════════════
-   TOAST
-══════════════════════════════════════════════════════════════ */
-let toastCount=0;
-function toast(txt, accent) {
-  const el = document.createElement('div');
-  el.className = 'toast-msg';
-  const bg = accent ? (COL_HEX[accent]||accent)+'cc' : 'rgba(201,168,76,0.2)';
-  const bc = accent ? (COL_HEX[accent]||accent)+'55' : 'rgba(201,168,76,0.35)';
-  el.style.cssText = `background:${bg};border-color:${bc}`;
-  el.textContent = txt;
-  document.getElementById('toast-container').prepend(el);
-  setTimeout(()=>el.remove(), 2600);
-}
-
-/* ══════════════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════
    RENDER
-══════════════════════════════════════════════════════════════ */
-function getAccentColor(col) {
-  return COL_HEX[col]||'#C9A84C';
-}
-
+═══════════════════════════════════════════ */
 function renderGame() {
   if(!G) return;
-  const acc = getAccentColor(G.curCol);
-
-  // Color aura
-  document.getElementById('color-aura').style.background =
-    `radial-gradient(ellipse, ${acc}0e 0%, transparent 70%)`;
-
-  // Deck count
-  document.getElementById('deck-count').textContent = `${G.deck.length} cards`;
-
-  // Draw backs
-  ['back-a','back-b','back-c'].forEach(id => {
-    document.getElementById(id).innerHTML = backSVG();
-  });
-
-  // Color pill
-  const pill = document.getElementById('color-pill');
-  pill.style.cssText = `background:${acc}18;border-color:${acc}55;color:${acc};box-shadow:0 0 16px ${acc}22`;
-  document.getElementById('color-dot').style.cssText = `background:${acc};box-shadow:0 0 8px ${acc}`;
-  document.getElementById('color-label').textContent = G.curCol;
-  document.getElementById('dir-icon').textContent = G.dir===1?'↻':'↺';
-
-  // Stack pill
-  const sp = document.getElementById('stack-pill');
-  if(G.stack>0){ sp.style.display='block'; sp.textContent=`+${G.stack} pending`; }
-  else sp.style.display='none';
-
-  // Discard pile
-  const discardEl = document.getElementById('discard-pile');
-  discardEl.innerHTML='';
-  const show = G.pile.slice(-4);
-  show.forEach((c,i)=>{
-    const div=document.createElement('div');
-    div.className='card-pos';
-    div.style.cssText=`position:absolute;inset:0;transform:rotate(${(i-show.length+1)*5}deg) translate(${(i-show.length+1)*2}px,0);z-index:${i};opacity:${i<show.length-1?0.7:1}`;
-    div.innerHTML=cardSVG(c, 72, 108, {glow:i===show.length-1, lift:i===show.length-1});
-    discardEl.appendChild(div);
-  });
-
-  // Draw pile hint
+  const acc = CHEX[G.curCol] || '#d4a847';
   const myTurn = G.cur===0;
-  const hint = document.getElementById('draw-hint');
-  hint.style.opacity = myTurn?'1':'0';
-  hint.style.color   = G.stack>0?'#C0392B':'rgba(201,168,76,.45)';
-  hint.textContent   = G.stack>0?`draw +${G.stack}`:'draw card';
-  const dp = document.getElementById('draw-pile');
-  if(myTurn){ dp.classList.add('draw-pulse'); dp.style.cursor='pointer'; }
-  else { dp.classList.remove('draw-pulse'); dp.style.cursor='default'; }
 
-  // Turn badge
-  const tb = document.getElementById('turn-badge');
-  if(myTurn){ tb.className='turn-badge my-turn'; tb.textContent='Your Turn'; }
-  else { tb.className='turn-badge waiting'; tb.textContent=`${G.players[G.cur].name}'s turn…`; }
+  // Aura
+  document.getElementById('aura').style.background=`radial-gradient(ellipse, ${acc}11 0%, transparent 70%)`;
 
-  // Human seat
-  renderSeat(document.getElementById('human-seat'), G.players[0], G.cur===0);
+  // Draw pile backs
+  ['dl2','dl1','dl0'].forEach(id=>{ document.getElementById(id).innerHTML=backSVG(); });
+  document.getElementById('deck-lbl').textContent=`${G.deck.length} cards`;
+  const ring=document.getElementById('draw-ring');
+  const hint=document.getElementById('draw-hint-lbl');
+  if(myTurn){ring.classList.add('show');hint.style.opacity='1';}
+  else{ring.classList.remove('show');hint.style.opacity='0';}
+  if(G.stack>0) hint.textContent=`draw +${G.stack}`;
+  else hint.textContent='tap to draw';
+
+  // Color chip
+  const chip=document.getElementById('color-chip');
+  chip.style.background=`${acc}18`;chip.style.borderColor=`${acc}55`;chip.style.color=acc;chip.style.boxShadow=`0 0 14px ${acc}22`;
+  document.getElementById('chip-dot').style.cssText=`background:${acc};box-shadow:0 0 8px ${acc}`;
+  document.getElementById('chip-color').textContent=G.curCol;
+  document.getElementById('chip-dir').textContent=G.dir===1?'↻':'↺';
+
+  // Stack tag
+  const st=document.getElementById('stack-tag');
+  if(G.stack>0){st.classList.add('show');st.textContent=`+${G.stack} draw pending`;}
+  else st.classList.remove('show');
+
+  document.getElementById('pile-count').textContent=`${G.pile.length} discarded`;
+
+  // Discard stack
+  const ds=document.getElementById('discard-stack');
+  ds.innerHTML='';
+  const show=G.pile.slice(-4);
+  show.forEach((c,i)=>{
+    const d=document.createElement('div');
+    d.className='discard-layer';
+    d.style.cssText=`transform:rotate(${(i-show.length+1)*5}deg) translate(${(i-show.length+1)*2}px,0);z-index:${i};opacity:${i<show.length-1?.68:1}`;
+    d.innerHTML=cardSVG(c,{glow:i===show.length-1,lift:i===show.length-1});
+    ds.appendChild(d);
+  });
+
+  // Turn pill
+  const tp=document.getElementById('turn-pill');
+  const curName=G.players[G.cur].name;
+  if(myTurn){tp.className='turn-pill go';tp.textContent='Your Turn';}
+  else{tp.className='turn-pill wait';tp.textContent=`${curName}'s turn…`;}
 
   // Opponents
   renderOpponents();
-
-  // Human hand
+  // Human seat
+  renderHumanSeat();
+  // Hand
   renderHand();
 }
 
-function renderSeat(container, player, active) {
-  const acc=[COL_HEX.red,COL_HEX.blue,COL_HEX.green,COL_HEX.yellow][player.id%4];
-  const uno = player.hand.length===1;
-  container.innerHTML='';
-  const badge=document.createElement('div');
-  badge.className='seat-badge'+(active?' ':' inactive');
-  if(active) badge.style.cssText=`background:${acc}18;border-color:${acc}88;box-shadow:0 0 20px ${acc}33`;
-  else badge.style.cssText='';
+function colorVarsForId(id) {
+  const c=ACCENT[id%ACCENT.length];
+  // Convert hex to rgba components for CSS var injection
+  return c;
+}
 
-  badge.innerHTML=`
-    <div class="seat-avatar" style="background:${active?`radial-gradient(circle,${acc},${acc}88)`:`radial-gradient(circle,rgba(201,168,76,.35),rgba(201,168,76,.18))`};
-      border-color:${uno?COL_HEX.yellow:active?acc+'99':'rgba(201,168,76,.3)'};
-      box-shadow:${uno?`0 0 12px ${COL_HEX.yellow}`:active?`0 0 10px ${acc}55`:'none'}">${player.name[0]}</div>
-    <div>
-      <div class="seat-name" style="color:${active?'#F2E0C0':'rgba(242,224,192,.35)'}">${player.id===0?'You':player.name}</div>
-      <div style="display:flex;align-items:center;gap:5px">
-        <span class="seat-cards-count" style="color:${active?'#C9A84C':'rgba(201,168,76,.35)'}">${player.hand.length} cards</span>
-        ${uno?`<span class="seat-uno">UNO!</span>`:''}
+function renderSeatHTML(player, active) {
+  const acc=ACCENT[player.id%ACCENT.length];
+  const uno=player.hand.length===1;
+  const activeStyle=active?`style="--sa:${acc};--sab:${acc}18;--sas:${acc}22"`:'' ;
+  const avatarBg=active?`background:linear-gradient(135deg,${acc},${acc}88)`:`background:rgba(212,168,71,.12)`;
+  const avatarBorder=uno?`border-color:${CHEX.yellow}`:active?`border-color:${acc}88`:``;
+  return `<div class="seat${active?' active':''}" ${activeStyle}>
+    <div class="avatar" style="${avatarBg};${avatarBorder}">${player.name[0].toUpperCase()}</div>
+    <div class="seat-info">
+      <div class="seat-name">${player.id===0?'You':player.name}</div>
+      <div class="seat-count">
+        <span class="seat-num">${player.hand.length}</span>
+        <span style="font-size:9px;color:rgba(212,168,71,.35);letter-spacing:1px">cards</span>
+        ${uno?'<span class="uno-badge">UNO</span>':''}
       </div>
-    </div>`;
-  container.appendChild(badge);
+    </div>
+  </div>`;
+}
+
+function renderHumanSeat() {
+  document.getElementById('human-seat-wrap').innerHTML=renderSeatHTML(G.players[0], G.cur===0);
 }
 
 function renderOpponents() {
-  const zone=document.getElementById('opponents-zone');
+  const zone=document.getElementById('row-opponents');
   zone.innerHTML='';
   G.players.slice(1).forEach(p=>{
-    const acc=[COL_HEX.red,COL_HEX.blue,COL_HEX.green,COL_HEX.yellow][p.id%4];
     const active=G.cur===p.id;
-    const uno=p.hand.length===1;
     const wrap=document.createElement('div');
-    wrap.className='opponent-wrap';
+    wrap.className='opp-card';
+    wrap.innerHTML=renderSeatHTML(p,active);
 
-    // Seat badge
-    const badge=document.createElement('div');
-    badge.className='seat-badge'+(active?' ':' inactive');
-    if(active) badge.style.cssText=`background:${acc}18;border-color:${acc}88;box-shadow:0 0 20px ${acc}33`;
-    badge.innerHTML=`
-      <div class="seat-avatar" style="background:${active?`radial-gradient(circle,${acc},${acc}88)`:`radial-gradient(circle,rgba(201,168,76,.35),rgba(201,168,76,.18))`};
-        border-color:${uno?COL_HEX.yellow:active?acc+'99':'rgba(201,168,76,.3)'};
-        box-shadow:${uno?`0 0 12px ${COL_HEX.yellow}`:active?`0 0 10px ${acc}55`:'none'}">${p.name[0]}</div>
-      <div>
-        <div class="seat-name" style="color:${active?'#F2E0C0':'rgba(242,224,192,.35)'}">${p.name}</div>
-        <div style="display:flex;align-items:center;gap:5px">
-          <span class="seat-cards-count" style="color:${active?'#C9A84C':'rgba(201,168,76,.35)'}">${p.hand.length} cards</span>
-          ${uno?`<span class="seat-uno">UNO!</span>`:''}
-        </div>
-      </div>`;
-    wrap.appendChild(badge);
-
-    // Bot hand (face down fan)
+    // Fan
     const fan=document.createElement('div');
-    fan.className='bot-hand';
+    fan.className='bot-fan';
     const count=Math.min(p.hand.length,10);
-    fan.style.width=`${count*12+44}px`;
+    const totalWidth=(count-1)*11+48;
+    fan.style.width=totalWidth+'px';
     for(let i=0;i<count;i++){
-      const cd=document.createElement('div');
-      cd.className='bot-card';
-      cd.style.cssText=`left:${i*12}px;top:${Math.abs(i-count/2)*.5}px;transform:rotate(${(i-count/2)*2.8}deg);z-index:${i};transform-origin:bottom center`;
-      cd.innerHTML=backSVG(72,108,true);
-      fan.appendChild(cd);
+      const div=document.createElement('div');
+      div.className='fan-card';
+      div.style.cssText=`left:${i*11}px;bottom:0;transform:rotate(${(i-count/2)*2.5}deg);z-index:${i}`;
+      div.innerHTML=backSVG(true);
+      fan.appendChild(div);
     }
     if(p.hand.length>10){
       const more=document.createElement('div');
-      more.style.cssText=`position:absolute;left:${10*12+6}px;top:10px;font-size:10px;color:rgba(201,168,76,.5)`;
+      more.style.cssText='position:absolute;right:-30px;bottom:8px;font-size:10px;color:rgba(212,168,71,.4);white-space:nowrap';
       more.textContent=`+${p.hand.length-10}`;
       fan.style.position='relative';
       fan.appendChild(more);
@@ -877,8 +875,8 @@ function renderOpponents() {
 }
 
 function renderHand() {
-  const container=document.getElementById('hand-container');
-  container.innerHTML='';
+  const wrap=document.getElementById('hand-wrap');
+  wrap.innerHTML='';
   const myTurn=G.cur===0;
   const top=G.pile[G.pile.length-1];
   const hand=G.players[0].hand;
@@ -886,77 +884,57 @@ function renderHand() {
   hand.forEach((card,i)=>{
     const playable=myTurn&&canPlay(card,top,G.curCol);
     const isSel=selectedIdx===i;
-
-    const wrap=document.createElement('div');
-    wrap.className='hand-card'+(playable?' playable':'');
-    wrap.style.marginLeft=i>0?'-22px':'0';
-    wrap.style.zIndex=isSel?999:hand.length-i;
-    wrap.style.transform=isSel?'translateY(-28px)':playable?'translateY(-14px)':'translateY(0)';
-    wrap.style.animation=`cardSlide .3s ease ${Math.min(i*.04,.5)}s both`;
-    wrap.style.position='relative';
-
-    wrap.innerHTML=cardSVG(card,72,108,{glow:isSel,lift:playable});
-
-    // Dim non-playable during your turn
-    if(myTurn&&!playable&&!isSel){
-      const dim=document.createElement('div');
-      dim.style.cssText='position:absolute;inset:0;border-radius:10px;background:rgba(0,0,0,.45);pointer-events:none';
-      wrap.appendChild(dim);
-    }
-
-    if(playable){
-      wrap.addEventListener('click',()=>handleCardClick(i));
-    }
-
-    container.appendChild(wrap);
+    const div=document.createElement('div');
+    div.className='h-card'+(playable?' playable':'')+(isSel?' selected':'')+(myTurn&&!playable?' h-card-dim':'');
+    div.style.marginLeft=i>0?'-24px':'0';
+    div.style.zIndex=isSel?999:hand.length-i;
+    if(!isSel) div.style.transform=playable?'translateY(-14px)':'translateY(0)';
+    div.style.animation=`cardIn .3s ease ${Math.min(i*.04,.4)}s both`;
+    div.innerHTML=cardSVG(card,{glow:isSel,lift:playable&&!isSel});
+    if(playable) div.addEventListener('click',()=>handleCardClick(i));
+    wrap.appendChild(div);
   });
 }
 
-/* ══════════════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════
    ACTIONS
-══════════════════════════════════════════════════════════════ */
+═══════════════════════════════════════════ */
 function handleCardClick(idx) {
   if(!G||G.cur!==0||G.over) return;
   const card=G.players[0].hand[idx];
   const top=G.pile[G.pile.length-1];
-  if(!canPlay(card,top,G.curCol)){toast("Can't play that card",'#8B0000');return;}
+  if(!canPlay(card,top,G.curCol)){toast("Can't play that card",'#8b0000');return;}
   if(card.kind==='wild'){
-    selectedIdx=idx;
-    renderHand();
-    document.getElementById('color-modal').classList.add('show');
+    selectedIdx=idx;renderHand();
+    document.getElementById('color-overlay').classList.add('show');
   } else {
-    selectedIdx=idx;
-    renderHand();
-    setTimeout(()=>playCard(idx,null),130);
+    selectedIdx=idx;renderHand();
+    setTimeout(()=>doPlay(idx,null),140);
   }
 }
 
-function playCard(idx, chosenCol) {
+function doPlay(idx,chosenCol) {
   if(!G||G.cur!==0||G.over) return;
   const card=G.players[0].hand[idx];
   const top=G.pile[G.pile.length-1];
   if(!canPlay(card,top,G.curCol)) return;
-
   G.players[0].hand.splice(idx,1);
   G.pile.push(card);
-  G.curCol = card.kind==='wild' ? chosenCol : card.col;
+  G.curCol=card.kind==='wild'?chosenCol:card.col;
   selectedIdx=null;
-
-  toast(`You played ${LBL[card.val]??card.val}`, card.col==='wild'?chosenCol:card.col);
-
-  if(G.players[0].hand.length===0){ endGame('You'); return; }
-  if(G.players[0].hand.length===1) toast('UNO!','yellow');
-
+  toast(`You played ${LABELS[card.val]??card.val}`,card.col==='wild'?chosenCol:card.col);
+  if(!G.players[0].hand.length){endGame('You');return;}
+  if(G.players[0].hand.length===1) toast('UNO! 🃏','yellow');
   applyEffect(card,0);
   renderGame();
   scheduleBotTurn();
 }
 
-function handleDraw() {
+function doDraw() {
   if(!G||G.cur!==0||G.over) return;
   const n=G.stack>0?G.stack:1;
-  drawCards(0,n);
-  if(G.stack>0){ toast(`You drew ${n} cards`,'blue'); G.stack=0; }
+  drawN(0,n);
+  if(G.stack>0){toast(`You drew ${n} cards`,'blue');G.stack=0;}
   else toast('Drew a card','blue');
   const len=G.players.length;
   G.cur=(G.cur+G.dir+len)%len;
@@ -965,79 +943,72 @@ function handleDraw() {
   scheduleBotTurn();
 }
 
-function drawCards(pid, n) {
+function drawN(pid,n) {
   for(let i=0;i<n;i++){
-    if(G.deck.length===0){
-      const top=G.pile.pop(); G.deck=shuffle(G.pile); G.pile=[top];
-    }
+    if(G.deck.length===0){const t=G.pile.pop();G.deck=shuffle(G.pile);G.pile=[t];}
     if(G.deck.length>0) G.players[pid].hand.push(G.deck.pop());
   }
 }
 
-function applyEffect(card, pid) {
+function applyEffect(card,pid) {
   const n=G.players.length;
   let next=(G.cur+G.dir+n)%n;
   if(card.val==='Rev'){
-    G.dir*=-1; next=(G.cur+G.dir+n)%n;
+    G.dir*=-1;next=(G.cur+G.dir+n)%n;
     toast(`${G.players[pid].name} reversed direction!`,'wild');
   } else if(card.val==='Skip'){
-    const skip=next; next=(next+G.dir+n)%n;
+    const skip=next;next=(next+G.dir+n)%n;
     toast(`${G.players[skip].name} is skipped!`,card.col);
   } else if(card.val==='+2'){
-    G.stack+=2;
-    toast(`+2 draw penalty!`,card.col);
+    G.stack+=2;toast(`+2! ${G.players[next].name} must draw`,card.col);
   } else if(card.val==='W+4'){
-    G.stack+=4;
-    toast(`Wild +4 — ${G.stack} draws!`,'wild');
+    G.stack+=4;toast(`Wild +4! Draw ${G.stack}!`,'wild');
   }
   G.cur=next;
 }
 
 function endGame(winner) {
-  G.over=true; G.winner=winner;
-  document.getElementById('win-name').textContent=winner;
-  document.getElementById('win-screen').classList.add('show');
+  G.over=true;G.winner=winner;
+  document.getElementById('win-name-el').textContent=winner;
+  document.getElementById('win-overlay').classList.add('show');
 }
 
-/* ══════════════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════
    BOT AI
-══════════════════════════════════════════════════════════════ */
+═══════════════════════════════════════════ */
 function scheduleBotTurn() {
   clearTimeout(botTimer);
   if(!G||G.over||G.cur===0) return;
-  botTimer=setTimeout(doBotTurn, 820+Math.random()*580);
+  botTimer=setTimeout(doBotTurn,850+Math.random()*550);
 }
 
 function doBotTurn() {
   if(!G||G.over||G.cur===0) return;
-  const bid=G.cur, bot=G.players[bid];
+  const bid=G.cur,bot=G.players[bid];
   const top=G.pile[G.pile.length-1];
   const n=G.players.length;
 
-  // Must draw stack
   if(G.stack>0){
     const canBlock=bot.hand.some(c=>c.val==='+2'||c.val==='W+4');
     if(!canBlock){
-      drawCards(bid,G.stack);
-      toast(`${bot.name} drew ${G.stack}`,COL_HEX.red);
-      G.stack=0; G.cur=(bid+G.dir+n)%n;
-      renderGame(); scheduleBotTurn(); return;
+      drawN(bid,G.stack);
+      toast(`${bot.name} drew ${G.stack}`,'#c0392b');
+      G.stack=0;G.cur=(bid+G.dir+n)%n;
+      renderGame();scheduleBotTurn();return;
     }
   }
 
   const playable=bot.hand.map((c,i)=>({c,i})).filter(({c})=>canPlay(c,top,G.curCol));
   if(!playable.length){
-    drawCards(bid,1); toast(`${bot.name} draws`,'#8B6914');
-    G.cur=(bid+G.dir+n)%n; renderGame(); scheduleBotTurn(); return;
+    drawN(bid,1);toast(`${bot.name} draws`,'#8B6914');
+    G.cur=(bid+G.dir+n)%n;renderGame();scheduleBotTurn();return;
   }
 
-  // Strategy: prefer action cards, save wilds
   let pick=playable.find(({c})=>c.val==='+2')||
            playable.find(({c})=>c.val==='Skip')||
            playable.find(({c})=>c.val==='Rev')||
            (bot.hand.length<=3&&playable.find(({c})=>c.val==='W+4'))||
-           playable.find(({c})=>c.kind!=='wild')||
-           playable[0];
+           playable.find(({c})=>c.kind!=='wild')||playable[0];
 
   const card=pick.c;
   bot.hand.splice(pick.i,1);
@@ -1046,13 +1017,13 @@ function doBotTurn() {
   let cc=card.col;
   if(card.kind==='wild'){
     const cnt={red:0,yellow:0,green:0,blue:0};
-    bot.hand.forEach(c=>{ if(c.col!=='wild') cnt[c.col]++; });
+    bot.hand.forEach(c=>{if(c.col!=='wild')cnt[c.col]++;});
     cc=COLORS.reduce((a,b)=>cnt[a]>=cnt[b]?a:b);
   }
-  G.curCol = card.kind==='wild' ? cc : card.col;
-  toast(`${bot.name} played ${LBL[card.val]??card.val}`, G.curCol);
+  G.curCol=card.kind==='wild'?cc:card.col;
+  toast(`${bot.name} played ${LABELS[card.val]??card.val}`,G.curCol);
 
-  if(!bot.hand.length){ renderGame(); endGame(bot.name); return; }
+  if(!bot.hand.length){renderGame();endGame(bot.name);return;}
   if(bot.hand.length===1) toast(`${bot.name} — UNO!`,'yellow');
 
   applyEffect(card,bid);
@@ -1060,89 +1031,102 @@ function doBotTurn() {
   scheduleBotTurn();
 }
 
-/* ══════════════════════════════════════════════════════════════
-   FLOATING MENU CARDS
-══════════════════════════════════════════════════════════════ */
-function spawnMenuCards() {
-  const fc=document.getElementById('floating-cards');
-  const cards=[
-    {col:'red',val:'7',kind:'num',x:'8%',y:'10%',r:'-15deg',r2:'-10deg',d:3.8,delay:0},
-    {col:'blue',val:'Skip',kind:'act',x:'80%',y:'8%',r:'18deg',r2:'23deg',d:4.5,delay:.7},
-    {col:'green',val:'+2',kind:'act',x:'4%',y:'62%',r:'-8deg',r2:'-3deg',d:3.2,delay:1.3},
-    {col:'yellow',val:'9',kind:'num',x:'84%',y:'66%',r:'22deg',r2:'17deg',d:5,delay:.4},
-    {col:'wild',val:'Wild',kind:'wild',x:'72%',y:'20%',r:'-12deg',r2:'-6deg',d:4.2,delay:1},
-  ];
-  cards.forEach(c=>{
-    const div=document.createElement('div');
-    div.className='floating-card';
-    div.style.cssText=`left:${c.x};top:${c.y};animation-duration:${c.d}s;animation-delay:${c.delay}s;transform:rotate(${c.r});--r:${c.r};--r2:${c.r2}`;
-    div.innerHTML=cardSVG({col:c.col,val:c.val,kind:c.kind},56,84);
-    fc.appendChild(div);
-  });
+/* ═══════════════════════════════════════════
+   TOASTS
+═══════════════════════════════════════════ */
+function toast(txt, accent) {
+  const el=document.createElement('div');
+  el.className='toast';
+  const bg=CHEX[accent]||accent||'rgba(212,168,71,.2)';
+  el.style.cssText=`background:${CHEX[accent]?bg+'cc':bg};border-color:${bg}66`;
+  el.textContent=txt;
+  document.getElementById('toasts').prepend(el);
+  setTimeout(()=>el.remove(),2600);
 }
 
-/* ══════════════════════════════════════════════════════════════
-   SCREEN MANAGEMENT
-══════════════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════
+   SCREEN / OVERLAY HELPERS
+═══════════════════════════════════════════ */
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
 }
-
-function startGame() {
-  clearTimeout(botTimer);
-  selectedIdx=null;
-  initGame();
-  document.getElementById('win-screen').classList.remove('show');
-  showScreen('game');
-  renderGame();
-  toast('Cards dealt — good luck!','#C9A84C');
+function closeOverlays() {
+  document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('show'));
 }
 
-/* ══════════════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════
+   FLOATING MENU CARDS
+═══════════════════════════════════════════ */
+function spawnFloatingCards() {
+  const wrap=document.getElementById('bg-cards-wrap');
+  const cards=[
+    {col:'red',val:'7',kind:'num', x:'7%',y:'12%',ft:'translateY(0) rotate(-14deg)',fth:'translateY(-18px) rotate(-9deg)',d:3.8,del:0},
+    {col:'blue',val:'Skip',kind:'act',x:'82%',y:'8%', ft:'translateY(0) rotate(16deg)',fth:'translateY(-14px) rotate(21deg)',d:4.5,del:.6},
+    {col:'green',val:'+2',kind:'act',x:'3%',y:'60%', ft:'translateY(0) rotate(-7deg)',fth:'translateY(-20px) rotate(-2deg)',d:3.3,del:1.2},
+    {col:'yellow',val:'9',kind:'num',x:'85%',y:'65%',ft:'translateY(0) rotate(20deg)',fth:'translateY(-16px) rotate(15deg)',d:5,del:.3},
+    {col:'wild',val:'Wild',kind:'wild',x:'74%',y:'24%',ft:'translateY(0) rotate(-11deg)',fth:'translateY(-12px) rotate(-6deg)',d:4.2,del:.9},
+    {col:'red',val:'Rev',kind:'act',x:'12%',y:'75%', ft:'translateY(0) rotate(8deg)',fth:'translateY(-15px) rotate(13deg)',d:3.6,del:1.5},
+  ];
+  cards.forEach(c=>{
+    const div=document.createElement('div');
+    div.className='bg-card';
+    div.style.cssText=`left:${c.x};top:${c.y};--ft:${c.ft};--fth:${c.fth};animation:floatCard ${c.d}s ease-in-out ${c.del}s infinite;transform:${c.ft}`;
+    div.innerHTML=cardSVG({col:c.col,val:c.val,kind:c.kind},{});
+    wrap.appendChild(div);
+  });
+}
+
+/* ═══════════════════════════════════════════
    EVENT LISTENERS
-══════════════════════════════════════════════════════════════ */
-// Player count buttons
-document.querySelectorAll('.player-btn').forEach(btn=>{
+═══════════════════════════════════════════ */
+// Player count
+document.querySelectorAll('.p-btn').forEach(btn=>{
   btn.addEventListener('click',()=>{
     numPlayers=parseInt(btn.dataset.n);
-    document.querySelectorAll('.player-btn').forEach(b=>b.classList.remove('active'));
-    btn.classList.add('active');
+    document.querySelectorAll('.p-btn').forEach(b=>b.classList.remove('sel'));
+    btn.classList.add('sel');
   });
 });
 
 // Deal
 document.getElementById('deal-btn').addEventListener('click', startGame);
 
-// Draw pile
-document.getElementById('draw-pile').addEventListener('click',()=>{
-  if(G&&G.cur===0&&!G.over) handleDraw();
+// Draw pile click
+document.getElementById('draw-stack').addEventListener('click',()=>{
+  if(G&&G.cur===0&&!G.over) doDraw();
 });
 
-// Color choices
-document.querySelectorAll('.color-choice').forEach(btn=>{
+// Color picker
+document.querySelectorAll('.cp-btn').forEach(btn=>{
   btn.addEventListener('click',()=>{
     const col=btn.dataset.c;
-    document.getElementById('color-modal').classList.remove('show');
-    if(selectedIdx!==null){ playCard(selectedIdx,col); }
+    document.getElementById('color-overlay').classList.remove('show');
+    if(selectedIdx!==null) doPlay(selectedIdx,col);
   });
-  btn.addEventListener('mouseenter',()=>{ btn.style.transform='scale(1.15) translateY(-4px)'; btn.style.boxShadow=`0 10px 32px ${COL_HEX[btn.dataset.c]}, 0 0 0 3px rgba(201,168,76,.55)`; });
-  btn.addEventListener('mouseleave',()=>{ btn.style.transform=''; btn.style.boxShadow=`0 4px 16px ${COL_HEX[btn.dataset.c]}55`; });
+  btn.addEventListener('mouseenter',()=>{
+    btn.style.transform='scale(1.18) translateY(-5px)';
+    btn.style.boxShadow=`0 10px 28px ${CHEX[btn.dataset.c]}, 0 0 0 3px rgba(212,168,71,.5)`;
+  });
+  btn.addEventListener('mouseleave',()=>{
+    btn.style.transform='';
+    btn.style.boxShadow=`0 4px 16px ${CHEX[btn.dataset.c]}66`;
+  });
 });
 
-// Replay
-document.getElementById('replay-btn').addEventListener('click', startGame);
+// Win screen buttons
+document.getElementById('win-play-btn').addEventListener('click', startGame);
+document.getElementById('win-menu-btn').addEventListener('click',()=>{
+  clearTimeout(botTimer);G=null;selectedIdx=null;closeOverlays();showScreen('menu');
+});
 
 // Back to menu
-document.getElementById('back-menu-btn').addEventListener('click',()=>{
-  clearTimeout(botTimer);
-  G=null; selectedIdx=null;
-  document.getElementById('win-screen').classList.remove('show');
-  showScreen('menu');
+document.getElementById('menu-btn').addEventListener('click',()=>{
+  clearTimeout(botTimer);G=null;selectedIdx=null;closeOverlays();showScreen('menu');
 });
 
-// Init floating cards on menu
-spawnMenuCards();
+// Boot
+spawnFloatingCards();
 </script>
 </body>
 </html>
